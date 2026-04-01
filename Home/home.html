@@ -1,3 +1,90 @@
+<!DOCTYPE html>
 <html>
-WIP
+<head>
+    <meta charset="utf-8" />
+    <title>AtomMod Control</title>
+    <style>
+        body { font-family: Arial, Helvetica, sans-serif; margin: 20px; }
+        .box { border: 1px solid #ccc; padding: 12px; margin-bottom: 12px; }
+        label { display: block; margin-top: 8px; }
+    </style>
+</head>
+<body>
+    <h1>AtomMod - Sunucu Durumu</h1>
+
+    <div class="box">
+        <h3>Sunucu Durumu</h3>
+        <div id="status">Yükleniyor...</div>
+        <div id="players"></div>
+        <button id="refresh">Yenile</button>
+    </div>
+
+    <div class="box">
+        <h3>Yetkili Kaydı (sadece adminler için)</h3>
+        <form id="registerForm">
+            <label>Kullanıcı adı: <input type="text" id="username" required></label>
+            <label>Şifre: <input type="password" id="password" required></label>
+            <button type="submit">Kaydol</button>
+        </form>
+        <div id="regResult"></div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:5001'; // plugin'in çalıştığı adres
+
+        async function checkStatus() {
+            const statusEl = document.getElementById('status');
+            const playersEl = document.getElementById('players');
+            statusEl.textContent = 'İstek gönderiliyor...';
+            playersEl.textContent = '';
+            try {
+                const res = await fetch(baseUrl + '/status', { method: 'GET' });
+                if (!res.ok) throw new Error('Sunucuya ulaşılamadı: ' + res.status);
+                const data = await res.json();
+                statusEl.textContent = `Sunucuda ${data.count} kişi var.`;
+                if (data.players && data.players.length) {
+                    playersEl.innerHTML = '<strong>Oyuncular:</strong><br>' + data.players.map(p => escapeHtml(p)).join('<br>');
+                } else {
+                    playersEl.textContent = 'Oyuncu bilgisi yok.';
+                }
+            } catch (err) {
+                statusEl.textContent = 'Hata: ' + err.message;
+            }
+        }
+
+        document.getElementById('refresh').addEventListener('click', (e) => { e.preventDefault(); checkStatus(); });
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const resultEl = document.getElementById('regResult');
+            resultEl.textContent = 'Kayıt gönderiliyor...';
+            try {
+                const res = await fetch(baseUrl + '/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    resultEl.textContent = 'Kayıt başarılı.';
+                } else {
+                    resultEl.textContent = 'Hata: ' + (data.error || JSON.stringify(data));
+                }
+            } catch (err) {
+                resultEl.textContent = 'Hata: ' + err.message;
+            }
+        });
+
+        function escapeHtml(s) {
+            return s.replace(/[&<>\"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" })[c]);
+        }
+
+        // Sayfa her açıldığında plugin'e istek at (istendiği gibi)
+        window.addEventListener('load', () => {
+            checkStatus();
+        });
+    </script>
+</body>
 </html>
