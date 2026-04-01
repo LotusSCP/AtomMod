@@ -21,8 +21,9 @@
   <script src="supabase.js"></script>
   <script>
     const baseUrl = 'http://localhost:5001'; // plugin adresini gerekirse değiştirin
-    const defaultSupabaseUrl = '';
-    const defaultSupabaseAnon = '';
+    const defaultSupabaseUrl = 'https://kdvvvldbetjthldhodab.supabase.co
+';
+    const defaultSupabaseAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkdnZ2bGRiZXRqdGhsZGhvZGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNjA3NDIsImV4cCI6MjA5MDYzNjc0Mn0.o0WFi9ZYYGkInwFccMruvGYShAO_tQUpMKh_FqLgqBA';
 
     async function pluginLogin(username, password) {
       const res = await fetch(baseUrl + '/login', {
