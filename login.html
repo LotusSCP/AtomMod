@@ -10,36 +10,58 @@
   <main>
     <h1>Giriş</h1>
     <form id="loginForm">
-      <label>Kullanıcı adı:<br><input type="text" id="username" required></label>
+      <label>Kullanıcı adı / E-posta:<br><input type="text" id="username" required></label>
       <label>Şifre:<br><input type="password" id="password" required></label>
+      <label><input type="checkbox" id="useSupabaseAuth"> Supabase Auth kullan</label>
       <button type="submit">Giriş Yap</button>
     </form>
     <div id="result"></div>
     <p><a href="index.html">Ana Sayfa</a> | <a href="register.html">Kayıt Ol</a></p>
   </main>
-
+  <script src="supabase.js"></script>
   <script>
     const baseUrl = 'http://localhost:5001'; // plugin adresini gerekirse değiştirin
+    const defaultSupabaseUrl = '';
+    const defaultSupabaseAnon = '';
+
+    async function pluginLogin(username, password) {
+      const res = await fetch(baseUrl + '/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username, password: password })
+      });
+      return res;
+    }
+
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const u = document.getElementById('username').value.trim();
       const p = document.getElementById('password').value;
+      const useSupabase = document.getElementById('useSupabaseAuth').checked;
       const resEl = document.getElementById('result');
       resEl.textContent = 'Giriş doğrulanıyor...';
+
       try {
-        const res = await fetch(baseUrl + '/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: u, password: p })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          resEl.textContent = 'Giriş başarılı. Yetki: ' + data.permission;
-          // basit oturum
-          sessionStorage.setItem('atommod_permission', data.permission);
-          window.location.href = 'status.html';
+        if (useSupabase) {
+          const SUPABASE_URL = defaultSupabaseUrl || prompt('Supabase URL (e.g. https://xyz.supabase.co)');
+          const SUPABASE_ANON_KEY = defaultSupabaseAnon || prompt('Supabase anon key');
+          if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase bilgileri eksik');
+          const data = await window.supabaseUtils.signIn(SUPABASE_URL, SUPABASE_ANON_KEY, u, p);
+          if (data && data.access_token) {
+            resEl.textContent = 'Supabase girişi başarılı.';
+            sessionStorage.setItem('atommod_supabase_session', JSON.stringify(data));
+            window.location.href = 'status.html';
+            return;
+          }
+          resEl.textContent = 'Giriş başarısız: ' + JSON.stringify(data);
         } else {
-          resEl.textContent = 'Giriş başarısız: ' + (data.error || JSON.stringify(data));
+          const res = await pluginLogin(u, p);
+          const data = await res.json();
+          if (res.ok) {
+            resEl.textContent = 'Giriş başarılı. Yetki: ' + data.permission;
+            sessionStorage.setItem('atommod_permission', data.permission);
+            window.location.href = 'status.html';
+          } else {
+            resEl.textContent = 'Giriş başarısız: ' + (data.error || JSON.stringify(data));
+          }
         }
       } catch (err) {
         resEl.textContent = 'Hata: ' + err.message;

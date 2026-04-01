@@ -29,8 +29,32 @@
         <li>Veya <code>index.html</code>'i doğrudan açabilirsiniz (CORS kısıtları nedeniyle bazı fonksiyonlar sınırlı olabilir).</li>
       </ul>
     </section>
+
+    <section>
+      <h3>Supabase ayarları (opsiyonel)</h3>
+      <p>Buraya Supabase URL ve anon key girip geçici olarak tarayıcı oturumuna kaydedebilirsiniz (sadece read için anon key kullanın).</p>
+      <label>Supabase URL:<br><input id="sbUrl" style="width:100%"></label>
+      <label>Anon Key:<br><input id="sbKey" style="width:100%"></label>
+      <button id="saveSb">Kaydet</button>
+    </section>
   </main>
 
+  <script src="supabase.js"></script>
   <script src="app.js"></script>
+  <script>
+    document.getElementById('saveSb').addEventListener('click', function () {
+      var url = document.getElementById('sbUrl').value.trim();
+      var key = document.getElementById('sbKey').value.trim();
+      if (!url || !key) return alert('Lütfen her iki alanı doldurun');
+      if (window.atommodApp && window.atommodApp.setSupabaseConfig) {
+        window.atommodApp.setSupabaseConfig(url, key);
+        alert('Kaydedildi (sessionStorage)');
+      } else {
+        sessionStorage.setItem('atommod_supabase_url', url);
+        sessionStorage.setItem('atommod_supabase_anon', key);
+        alert('Kaydedildi (sessionStorage)');
+      }
+    });
+  </script>
 </body>
 </html>

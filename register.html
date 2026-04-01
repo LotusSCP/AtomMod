@@ -10,33 +10,41 @@
   <main>
     <h1>Kayıt Ol</h1>
     <form id="registerForm">
-      <label>Kullanıcı adı:<br><input type="text" id="username" required></label>
+      <label>Kullanıcı adı / E-posta:<br><input type="text" id="username" required></label>
       <label>Şifre:<br><input type="password" id="password" required></label>
+      <label><input type="checkbox" id="useSupabaseAuth"> Supabase Auth kullan</label>
       <button type="submit">Kaydol</button>
     </form>
     <div id="result"></div>
     <p><a href="index.html">Ana Sayfa</a> | <a href="login.html">Giriş Yap</a></p>
   </main>
 
+  <script src="supabase.js"></script>
   <script>
     const baseUrl = 'http://localhost:5001';
+    const defaultSupabaseUrl = '';
+    const defaultSupabaseAnon = '';
+
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const u = document.getElementById('username').value.trim();
       const p = document.getElementById('password').value;
+      const useSupabase = document.getElementById('useSupabaseAuth').checked;
       const resEl = document.getElementById('result');
       resEl.textContent = 'Kayıt gönderiliyor...';
       try {
-        const res = await fetch(baseUrl + '/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: u, password: p })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          resEl.textContent = 'Kayıt başarılı. Giriş yapabilirsiniz.';
+        if (useSupabase) {
+          const SUPABASE_URL = defaultSupabaseUrl || prompt('Supabase URL (e.g. https://xyz.supabase.co)');
+          const SUPABASE_ANON_KEY = defaultSupabaseAnon || prompt('Supabase anon key');
+          if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase bilgileri eksik');
+          const data = await window.supabaseUtils.signUp(SUPABASE_URL, SUPABASE_ANON_KEY, u, p);
+          resEl.textContent = JSON.stringify(data);
         } else {
-          resEl.textContent = 'Hata: ' + (data.error || JSON.stringify(data));
+          const res = await fetch(baseUrl + '/register', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: u, password: p })
+          });
+          const data = await res.json();
+          if (res.ok) resEl.textContent = 'Kayıt başarılı. Giriş yapabilirsiniz.'; else resEl.textContent = 'Hata: ' + (data.error || JSON.stringify(data));
         }
       } catch (err) {
         resEl.textContent = 'Hata: ' + err.message;

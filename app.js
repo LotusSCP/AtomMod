@@ -7,4 +7,15 @@ function currentPermission(){ return Number(sessionStorage.getItem('atommod_perm
 // Base URL config
 const baseUrl = 'http://localhost:5001';
 
+function setSupabaseConfig(url, anonKey) {
+  if (url) sessionStorage.setItem('atommod_supabase_url', url);
+  if (anonKey) sessionStorage.setItem('atommod_supabase_anon', anonKey);
+}
+
+window.atommodApp = {
+  escapeHtml: escapeHtml,
+  currentPermission: currentPermission,
+  baseUrl: baseUrl,
+  setSupabaseConfig: setSupabaseConfig
+};
 export { escapeHtml, currentPermission, baseUrl };
