@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AtomMod - Kayıt</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <h1>Kayıt Ol</h1>
+    <form id="registerForm">
+      <label>Kullanıcı adı:<br><input type="text" id="username" required></label>
+      <label>Şifre:<br><input type="password" id="password" required></label>
+      <button type="submit">Kaydol</button>
+    </form>
+    <div id="result"></div>
+    <p><a href="index.html">Ana Sayfa</a> | <a href="login.html">Giriş Yap</a></p>
+  </main>
+
+  <script>
+    const baseUrl = 'http://localhost:5001';
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value;
+      const resEl = document.getElementById('result');
+      resEl.textContent = 'Kayıt gönderiliyor...';
+      try {
+        const res = await fetch(baseUrl + '/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          resEl.textContent = 'Kayıt başarılı. Giriş yapabilirsiniz.';
+        } else {
+          resEl.textContent = 'Hata: ' + (data.error || JSON.stringify(data));
+        }
+      } catch (err) {
+        resEl.textContent = 'Hata: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>

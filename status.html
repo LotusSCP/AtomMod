@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AtomMod - Sunucu Durumu</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <h1>Sunucu Durumu</h1>
+    <div id="status">Yükleniyor...</div>
+    <div id="players"></div>
+    <button id="refresh">Yenile</button>
+    <p><a href="index.html">Ana Sayfa</a></p>
+  </main>
+
+  <script>
+    const baseUrl = 'http://localhost:5001';
+    async function checkStatus() {
+      const statusEl = document.getElementById('status');
+      const playersEl = document.getElementById('players');
+      statusEl.textContent = 'İstek gönderiliyor...';
+      playersEl.textContent = '';
+      try {
+        const res = await fetch(baseUrl + '/status');
+        if (!res.ok) throw new Error('Sunucuya ulaşılamadı: ' + res.status);
+        const data = await res.json();
+        statusEl.textContent = `Sunucuda ${data.count} kişi var.`;
+        if (data.players && data.players.length) {
+          playersEl.innerHTML = '<strong>Oyuncular:</strong><br>' + data.players.map(p => escapeHtml(p)).join('<br>');
+        } else playersEl.textContent = 'Oyuncu bilgisi yok.';
+      } catch (err) {
+        statusEl.textContent = 'Hata: ' + err.message;
+      }
+    }
+
+    document.getElementById('refresh').addEventListener('click', (e) => { e.preventDefault(); checkStatus(); });
+
+    function escapeHtml(s) { return s.replace(/[&<>\"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;" })[c]); }
+
+    window.addEventListener('load', () => { checkStatus(); });
+  </script>
+</body>
+</html>

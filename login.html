@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AtomMod - Giriş</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <h1>Giriş</h1>
+    <form id="loginForm">
+      <label>Kullanıcı adı:<br><input type="text" id="username" required></label>
+      <label>Şifre:<br><input type="password" id="password" required></label>
+      <button type="submit">Giriş Yap</button>
+    </form>
+    <div id="result"></div>
+    <p><a href="index.html">Ana Sayfa</a> | <a href="register.html">Kayıt Ol</a></p>
+  </main>
+
+  <script>
+    const baseUrl = 'http://localhost:5001'; // plugin adresini gerekirse değiştirin
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value;
+      const resEl = document.getElementById('result');
+      resEl.textContent = 'Giriş doğrulanıyor...';
+      try {
+        const res = await fetch(baseUrl + '/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          resEl.textContent = 'Giriş başarılı. Yetki: ' + data.permission;
+          // basit oturum
+          sessionStorage.setItem('atommod_permission', data.permission);
+          window.location.href = 'status.html';
+        } else {
+          resEl.textContent = 'Giriş başarısız: ' + (data.error || JSON.stringify(data));
+        }
+      } catch (err) {
+        resEl.textContent = 'Hata: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
