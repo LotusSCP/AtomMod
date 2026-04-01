@@ -41,6 +41,10 @@
 
       try {
         if (useSupabase) {
+          if (!window.supabaseUtils || typeof window.supabaseUtils.signIn !== 'function') {
+            throw new Error('supabase.js yüklenemedi veya tanımlı değil. Network tabında supabase.js dosyasının yüklendiğini kontrol edin.');
+          }
+
           const SUPABASE_URL = defaultSupabaseUrl || prompt('Supabase URL (e.g. https://xyz.supabase.co)');
           const SUPABASE_ANON_KEY = defaultSupabaseAnon || prompt('Supabase anon key');
           if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase bilgileri eksik');

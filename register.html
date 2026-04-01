@@ -37,6 +37,10 @@
           const SUPABASE_URL = defaultSupabaseUrl || prompt('Supabase URL (e.g. https://xyz.supabase.co)');
           const SUPABASE_ANON_KEY = defaultSupabaseAnon || prompt('Supabase anon key');
           if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase bilgileri eksik');
+          if (!window.supabaseUtils || typeof window.supabaseUtils.signUp !== 'function') {
+            throw new Error('supabase.js yüklenemedi veya tanımlı değil. Network tabında supabase.js dosyasının yüklendiğini kontrol edin.');
+          }
+
           const result = await window.supabaseUtils.signUp(SUPABASE_URL, SUPABASE_ANON_KEY, u, p);
           if (result && result.ok) {
             resEl.textContent = 'Kayıt başarılı. Lütfen e-posta onayı bekleyin (varsa).';
