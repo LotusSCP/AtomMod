@@ -3,7 +3,8 @@
 
 function supabaseFetchPlayerStats(supabaseUrl, anonKey, limit = 20) {
   if (!supabaseUrl || !anonKey) return Promise.reject(new Error('Missing Supabase config'));
-  const url = supabaseUrl.replace(/\/$/, '') + `/rest/v1/player_stats?select=nickname,total_play_seconds,kills,deaths,last_seen_utc&order=total_play_seconds.desc&limit=${limit}`;
+  const url = supabaseUrl.replace(/\/$/, 'https://kdvvvldbetjthldhodab.supabase.co
+') + `/rest/v1/player_stats?select=nickname,total_play_seconds,kills,deaths,last_seen_utc&order=total_play_seconds.desc&limit=${limit}`;
   return fetch(url, {
     headers: {
       apikey: anonKey,
@@ -20,7 +21,8 @@ function supabaseFetchPlayerStats(supabaseUrl, anonKey, limit = 20) {
 
 function supabaseSignUp(supabaseUrl, anonKey, email, password) {
   // POST /auth/v1/signup
-  const url = supabaseUrl.replace(/\/$/, '') + '/auth/v1/signup';
+  const url = supabaseUrl.replace(/\/$/, 'https://kdvvvldbetjthldhodab.supabase.co
+') + '/auth/v1/signup';
   const res = await fetch(url, {
     method: 'POST',
     headers: {
