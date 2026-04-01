@@ -9,13 +9,19 @@ function supabaseFetchPlayerStats(supabaseUrl, anonKey, limit = 20) {
       apikey: anonKey,
       Authorization: 'Bearer ' + anonKey
     }
-  }).then(r => { if (!r.ok) throw new Error('status ' + r.status); return r.json(); });
+  }).then(async r => {
+    const txt = await r.text();
+    let data = null;
+    try { data = JSON.parse(txt); } catch { data = txt; }
+    if (!r.ok) throw new Error('Supabase fetch failed: ' + r.status + ' - ' + (data && data.message ? data.message : txt));
+    return data;
+  });
 }
 
 function supabaseSignUp(supabaseUrl, anonKey, email, password) {
   // POST /auth/v1/signup
   const url = supabaseUrl.replace(/\/$/, '') + '/auth/v1/signup';
-  return fetch(url, {
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -23,16 +29,17 @@ function supabaseSignUp(supabaseUrl, anonKey, email, password) {
       Authorization: 'Bearer ' + anonKey
     },
     body: JSON.stringify({ email: email, password: password })
-  }).then(async r => {
-    const txt = await r.text();
-    try { return JSON.parse(txt); } catch { return { status: r.status, body: txt }; }
   });
+  const txt = await res.text();
+  let data = null;
+  try { data = JSON.parse(txt); } catch { data = txt; }
+  return { ok: res.ok, status: res.status, data: data };
 }
 
 function supabaseSignIn(supabaseUrl, anonKey, email, password) {
   // POST /auth/v1/token with grant_type=password
   const url = supabaseUrl.replace(/\/$/, '') + '/auth/v1/token?grant_type=password';
-  return fetch(url, {
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -40,10 +47,11 @@ function supabaseSignIn(supabaseUrl, anonKey, email, password) {
       Authorization: 'Bearer ' + anonKey
     },
     body: JSON.stringify({ email: email, password: password })
-  }).then(async r => {
-    const txt = await r.text();
-    try { return JSON.parse(txt); } catch { return { status: r.status, body: txt }; }
   });
+  const txt = await res.text();
+  let data = null;
+  try { data = JSON.parse(txt); } catch { data = txt; }
+  return { ok: res.ok, status: res.status, data: data };
 }
 
 // Export to global
