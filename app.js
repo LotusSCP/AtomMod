@@ -1,4 +1,5 @@
-// app.js
+// app.js - Tarayıcı uyumlu versiyon (export kaldırıldı)
+
 function escapeHtml(s) {
     return String(s).replace(/[&<>\"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#39;" })[c]);
 }
@@ -10,7 +11,7 @@ function currentPermission() {
 const baseUrl = 'http://localhost:5001';
 
 // ========================
-// BURAYA KENDİ SUPABASE BİLGİLERİNİ YAZ
+// KENDİ SUPABASE BİLGİLERİNİ BURAYA YAZ
 // ========================
 const defaultSupabaseUrl = 'https://kdvvvldbetjthldhodab.supabase.co';   // ← Değiştir
 
@@ -21,6 +22,7 @@ function setSupabaseConfig(url, anonKey) {
     if (anonKey) sessionStorage.setItem('atommod_supabase_anon', anonKey);
 }
 
+// Global olarak erişilebilir yapıyoruz
 window.atommodApp = {
     escapeHtml: escapeHtml,
     currentPermission: currentPermission,
@@ -29,3 +31,5 @@ window.atommodApp = {
     defaultSupabaseUrl: defaultSupabaseUrl,
     defaultSupabaseAnon: defaultSupabaseAnon
 };
+
+console.log('✅ AtomMod app.js yüklendi. Supabase ayarları hazır.');
