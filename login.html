@@ -10,26 +10,13 @@
     <main>
         <h1>Giriş Yap</h1>
         <form id="loginForm">
-            <label>
-                Kullanıcı adı / E-posta:<br>
-                <input type="text" id="username" placeholder="ornek@email.com" required>
-            </label>
-
-            <label>
-                Şifre:<br>
-                <input type="password" id="password" required>
-            </label>
-
-            <label>
-                <input type="checkbox" id="useSupabaseAuth" checked>
-                Supabase Auth ile giriş yap (önerilen)
-            </label>
-
+            <label>Kullanıcı adı / E-posta:<br><input type="text" id="username" required></label>
+            <label>Şifre:<br><input type="password" id="password" required></label>
+            <label><input type="checkbox" id="rememberMe"> Beni Hatırla</label>
+            <label><input type="checkbox" id="useSupabaseAuth" checked> Supabase Auth kullan</label>
             <button type="submit" id="submitBtn">Giriş Yap</button>
         </form>
-
         <div id="result"></div>
-
         <p><a href="index.html">Ana Sayfa</a> | <a href="register.html">Kayıt Ol</a></p>
     </main>
 
@@ -41,67 +28,51 @@
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
+            const remember = document.getElementById('rememberMe').checked;
             const useSupabase = document.getElementById('useSupabaseAuth').checked;
             const resEl = document.getElementById('result');
-            const submitBtn = document.getElementById('submitBtn');
+            const btn = document.getElementById('submitBtn');
 
-            if (!username || !password) {
-                resEl.textContent = '❌ Kullanıcı adı ve şifre boş olamaz!';
-                return;
-            }
-
-            submitBtn.disabled = true;
-            resEl.textContent = 'Giriş yapılıyor, lütfen bekleyin...';
+            btn.disabled = true;
+            resEl.textContent = 'Giriş yapılıyor...';
 
             try {
                 if (useSupabase) {
-                    const SUPABASE_URL = window.atommodApp?.defaultSupabaseUrl || sessionStorage.getItem('atommod_supabase_url');
-                    const SUPABASE_ANON_KEY = window.atommodApp?.defaultSupabaseAnon || sessionStorage.getItem('atommod_supabase_anon');
+                    const result = await window.supabaseUtils.signIn(
+                        window.atommodApp.defaultSupabaseUrl,
+                        window.atommodApp.defaultSupabaseAnon,
+                        username, password
+                    );
 
-                    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-                        resEl.textContent = '❌ Supabase ayarları bulunamadı. app.js dosyasında URL ve Anon Key tanımlayın.';
-                        return;
-                    }
-
-                    const result = await window.supabaseUtils.signIn(SUPABASE_URL, SUPABASE_ANON_KEY, username, password);
-
-                    if (result.ok && result.data?.access_token) {
-                        resEl.innerHTML = `✅ Supabase ile giriş başarılı!`;
-                        sessionStorage.setItem('atommod_supabase_session', JSON.stringify(result.data));
-                        sessionStorage.setItem('atommod_auth_type', 'supabase');
-                        setTimeout(() => window.location.href = 'status.html', 1500);
+                    if (result.ok) {
+                        resEl.textContent = '✅ Giriş başarılı!';
+                        if (remember) localStorage.setItem('atommod_lastuser', username);
+                        setTimeout(() => window.location.href = 'status.html', 800);
                     } else {
-                        const errMsg = result.error?.message || 'Giriş başarısız.';
-                        resEl.textContent = `❌ ${errMsg}`;
+                        resEl.textContent = `❌ ${result.error?.message || 'Giriş başarısız'}`;
                     }
-                }
-                else {
+                } else {
+                    // Backend login
                     const res = await fetch(baseUrl + '/login', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username: username, password: password })
+                        body: JSON.stringify({ username, password })
                     });
-
                     const data = await res.json();
-
                     if (res.ok) {
-                        resEl.textContent = `✅ Giriş başarılı! Yetki: ${data.permission || 'Belirtilmemiş'}`;
-                        sessionStorage.setItem('atommod_permission', data.permission || '');
-                        sessionStorage.setItem('atommod_auth_type', 'backend');
-                        sessionStorage.setItem('atommod_username', username);
-                        setTimeout(() => window.location.href = 'status.html', 1500);
+                        resEl.textContent = '✅ Giriş başarılı!';
+                        if (remember) localStorage.setItem('atommod_lastuser', username);
+                        setTimeout(() => window.location.href = 'status.html', 800);
                     } else {
-                        resEl.textContent = `❌ Giriş başarısız: ${data.error || data.message || 'Bilinmeyen hata'}`;
+                        resEl.textContent = `❌ ${data.error || 'Geçersiz bilgi'}`;
                     }
                 }
             } catch (err) {
-                console.error(err);
-                resEl.textContent = `❌ Bir hata oluştu: ${err.message}`;
+                resEl.textContent = `❌ Hata: ${err.message}`;
             } finally {
-                submitBtn.disabled = false;
+                btn.disabled = false;
             }
         });
     </script>

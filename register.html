@@ -10,26 +10,12 @@
     <main>
         <h1>Kayıt Ol</h1>
         <form id="registerForm">
-            <label>
-                Kullanıcı adı / E-posta:<br>
-                <input type="text" id="username" placeholder="ornek@email.com" required>
-            </label>
-
-            <label>
-                Şifre:<br>
-                <input type="password" id="password" minlength="6" required>
-            </label>
-
-            <label>
-                <input type="checkbox" id="useSupabaseAuth" checked>
-                Supabase Auth ile kayıt ol (önerilen)
-            </label>
-
+            <label>Kullanıcı adı / E-posta:<br><input type="text" id="username" placeholder="ornek@email.com" required></label>
+            <label>Şifre:<br><input type="password" id="password" minlength="6" required></label>
+            <label><input type="checkbox" id="useSupabaseAuth" checked> Supabase Auth ile kayıt ol</label>
             <button type="submit" id="submitBtn">Kaydol</button>
         </form>
-
         <div id="result"></div>
-
         <p><a href="index.html">Ana Sayfa</a> | <a href="login.html">Giriş Yap</a></p>
     </main>
 
@@ -41,64 +27,41 @@
 
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             const useSupabase = document.getElementById('useSupabaseAuth').checked;
             const resEl = document.getElementById('result');
-            const submitBtn = document.getElementById('submitBtn');
+            const btn = document.getElementById('submitBtn');
 
-            if (!username || !password) {
-                resEl.textContent = '❌ Kullanıcı adı ve şifre boş olamaz!';
-                return;
-            }
-            if (password.length < 6) {
-                resEl.textContent = '❌ Şifre en az 6 karakter olmalıdır!';
-                return;
-            }
-
-            submitBtn.disabled = true;
-            resEl.textContent = 'Kayıt yapılıyor, lütfen bekleyin...';
+            btn.disabled = true;
+            resEl.textContent = 'Kayıt yapılıyor...';
 
             try {
                 if (useSupabase) {
-                    const SUPABASE_URL = window.atommodApp?.defaultSupabaseUrl || sessionStorage.getItem('atommod_supabase_url');
-                    const SUPABASE_ANON_KEY = window.atommodApp?.defaultSupabaseAnon || sessionStorage.getItem('atommod_supabase_anon');
+                    const SUPABASE_URL = window.atommodApp.defaultSupabaseUrl;
+                    const SUPABASE_ANON = window.atommodApp.defaultSupabaseAnon;
 
-                    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-                        resEl.textContent = '❌ Supabase ayarları bulunamadı. app.js dosyasında URL ve Anon Key tanımlayın.';
-                        return;
-                    }
-
-                    const result = await window.supabaseUtils.signUp(SUPABASE_URL, SUPABASE_ANON_KEY, username, password);
+                    const result = await window.supabaseUtils.signUp(SUPABASE_URL, SUPABASE_ANON, username, password);
 
                     if (result.ok) {
-                        resEl.innerHTML = `✅ Kayıt başarılı!<br>Lütfen e-posta adresinize gönderilen onay linkine tıklayın.`;
+                        resEl.innerHTML = `✅ <b>Kayıt başarılı!</b><br>Hesap oluşturuldu: ${username}`;
                     } else {
-                        const errMsg = result.error?.message || result.data?.message || 'Bilinmeyen hata';
-                        resEl.textContent = `❌ Kayıt başarısız: ${errMsg}`;
+                        resEl.textContent = `❌ Kayıt başarısız: ${result.error?.message || 'Bilinmeyen hata'}`;
                     }
-                }
-                else {
+                } else {
+                    // Backend ile kayıt
                     const res = await fetch(baseUrl + '/register', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username: username, password: password })
+                        body: JSON.stringify({ username, password })
                     });
-
                     const data = await res.json();
-
-                    if (res.ok) {
-                        resEl.textContent = '✅ Kayıt başarılı. Artık giriş yapabilirsiniz.';
-                    } else {
-                        resEl.textContent = `❌ Hata: ${data.error || data.message || JSON.stringify(data)}`;
-                    }
+                    resEl.textContent = res.ok ? '✅ Kayıt başarılı!' : `❌ Hata: ${data.error}`;
                 }
             } catch (err) {
-                console.error(err);
-                resEl.textContent = `❌ Bir hata oluştu: ${err.message}`;
+                resEl.textContent = `❌ Hata: ${err.message}`;
             } finally {
-                submitBtn.disabled = false;
+                btn.disabled = false;
             }
         });
     </script>
