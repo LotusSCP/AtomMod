@@ -33,11 +33,11 @@
         <p><a href="index.html">Ana Sayfa</a> | <a href="login.html">Giriş Yap</a></p>
     </main>
 
-    <!-- Supabase Utils -->
     <script src="supabase.js"></script>
+    <script src="app.js"></script>
 
     <script>
-        const baseUrl = 'http://localhost:5001';   // Backend URL'ini buradan değiştir
+        const baseUrl = 'http://localhost:5001';
 
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -52,7 +52,6 @@
                 resEl.textContent = '❌ Kullanıcı adı ve şifre boş olamaz!';
                 return;
             }
-
             if (password.length < 6) {
                 resEl.textContent = '❌ Şifre en az 6 karakter olmalıdır!';
                 return;
@@ -63,29 +62,31 @@
 
             try {
                 if (useSupabase) {
-                    // === SUPABASE AUTH İLE KAYIT ===
-                    if (!window.supabaseUtils || typeof window.supabaseUtils.signUp !== 'function') {
-                        throw new Error('supabase.js yüklenemedi. Dosyayı kontrol edin.');
-                    }
+                    // Supabase Auth ile kayıt
+                    const SUPABASE_URL = window.atommodApp?.defaultSupabaseUrl ||
+                        sessionStorage.getItem('atommod_supabase_url') ||
+                        window.atommodApp?.defaultSupabaseUrl;
 
-                    const SUPABASE_URL = prompt('Supabase Project URL girin[](https://xyz.supabase.co)', '') || '';
-                    const SUPABASE_ANON_KEY = prompt('Supabase Anon Key girin', '') || '';
+                    const SUPABASE_ANON_KEY = window.atommodApp?.defaultSupabaseAnon ||
+                        sessionStorage.getItem('atommod_supabase_anon') ||
+                        window.atommodApp?.defaultSupabaseAnon;
 
                     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-                        throw new Error('Supabase URL veya Anon Key girilmedi.');
+                        resEl.textContent = '❌ Supabase ayarları bulunamadı. Ana sayfadan URL ve Anon Key kaydedin.';
+                        return;
                     }
 
-                    const result = await window.supabaseUtils.signUp(SUPABASE_URL, SUPABASE_ANON_KEY, u, p);
+                    const result = await window.supabaseUtils.signUp(SUPABASE_URL, SUPABASE_ANON_KEY, username, password);
 
                     if (result.ok) {
-                        resEl.textContent = '✅ Kayıt başarılı! Lütfen e-posta onayı yapın.';
+                        resEl.innerHTML = `✅ Kayıt başarılı!<br>Lütfen e-posta adresinize gönderilen onay linkine tıklayın.`;
                     } else {
-                        const errMsg = result.error?.message || 'Bilinmeyen hata';
-                        resEl.textContent = '❌ Kayıt başarısız: ' + errMsg;
+                        const errMsg = result.error?.message || result.data?.message || 'Bilinmeyen hata';
+                        resEl.textContent = `❌ Kayıt başarısız: ${errMsg}`;
                     }
                 }
                 else {
-                    // === BACKEND'E POST AT (eski sistem) ===
+                    // Backend ile kayıt
                     const res = await fetch(baseUrl + '/register', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
