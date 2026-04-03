@@ -1,79 +1,131 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>AtomMod - Giriş</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AtomMod - Giriş Yap</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main>
-    <h1>Giriş</h1>
-    <form id="loginForm">
-      <label>Kullanıcı adı / E-posta:<br><input type="text" id="username" required></label>
-      <label>Şifre:<br><input type="password" id="password" required></label>
-      <label><input type="checkbox" id="useSupabaseAuth"> Supabase Auth kullan</label>
-      <button type="submit">Giriş Yap</button>
-    </form>
-    <div id="result"></div>
-    <p><a href="index.html">Ana Sayfa</a> | <a href="register.html">Kayıt Ol</a></p>
-  </main>
-  <script src="supabase.js"></script>
-  <script>
-    const baseUrl = 'http://localhost:5001'; // plugin adresini gerekirse değiştirin
-    const defaultSupabaseUrl = 'https://kdvvvldbetjthldhodab.supabase.co
-';
-    const defaultSupabaseAnon = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkdnZ2bGRiZXRqdGhsZGhvZGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNjA3NDIsImV4cCI6MjA5MDYzNjc0Mn0.o0WFi9ZYYGkInwFccMruvGYShAO_tQUpMKh_FqLgqBA';
+    <main>
+        <h1>Giriş Yap</h1>
+        <form id="loginForm">
+            <label>
+                Kullanıcı adı / E-posta:<br>
+                <input type="text" id="username" placeholder="ornek@email.com" required>
+            </label>
 
-    async function pluginLogin(username, password) {
-      const res = await fetch(baseUrl + '/login', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username, password: password })
-      });
-      return res;
-    }
+            <label>
+                Şifre:<br>
+                <input type="password" id="password" required>
+            </label>
 
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const u = document.getElementById('username').value.trim();
-      const p = document.getElementById('password').value;
-      const useSupabase = document.getElementById('useSupabaseAuth').checked;
-      const resEl = document.getElementById('result');
-      resEl.textContent = 'Giriş doğrulanıyor...';
+            <label>
+                <input type="checkbox" id="useSupabaseAuth" checked>
+                Supabase Auth ile giriş yap (önerilen)
+            </label>
 
-      try {
-        if (useSupabase) {
-          if (!window.supabaseUtils || typeof window.supabaseUtils.signIn !== 'function') {
-            throw new Error('supabase.js yüklenemedi veya tanımlı değil. Network tabında supabase.js dosyasının yüklendiğini kontrol edin.');
-          }
+            <button type="submit" id="submitBtn">Giriş Yap</button>
+        </form>
 
-          const SUPABASE_URL = defaultSupabaseUrl || prompt('Supabase URL (e.g. https://xyz.supabase.co)');
-          const SUPABASE_ANON_KEY = defaultSupabaseAnon || prompt('Supabase anon key');
-          if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase bilgileri eksik');
-          const result = await window.supabaseUtils.signIn(SUPABASE_URL, SUPABASE_ANON_KEY, u, p);
-          if (result && result.ok && result.data && result.data.access_token) {
-            resEl.textContent = 'Supabase girişi başarılı.';
-            sessionStorage.setItem('atommod_supabase_session', JSON.stringify(result.data));
-            window.location.href = 'status.html';
-            return;
-          }
-          // Show error message when available
-          const errMsg = (result && result.data && (result.data.msg || result.data.error_description || result.data.error || result.data.message)) || JSON.stringify(result && result.data) || 'Unknown error';
-          resEl.textContent = 'Giriş başarısız: ' + errMsg;
-        } else {
-          const res = await pluginLogin(u, p);
-          const data = await res.json();
-          if (res.ok) {
-            resEl.textContent = 'Giriş başarılı. Yetki: ' + data.permission;
-            sessionStorage.setItem('atommod_permission', data.permission);
-            window.location.href = 'status.html';
-          } else {
-            resEl.textContent = 'Giriş başarısız: ' + (data.error || JSON.stringify(data));
-          }
-        }
-      } catch (err) {
-        resEl.textContent = 'Hata: ' + err.message;
-      }
-    });
-  </script>
+        <div id="result"></div>
+
+        <p><a href="index.html">Ana Sayfa</a> | <a href="register.html">Kayıt Ol</a></p>
+    </main>
+
+    <script src="supabase.js"></script>
+
+    <script>
+        const baseUrl = 'http://localhost:5001';   // Backend URL'ini buradan değiştir
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const useSupabase = document.getElementById('useSupabaseAuth').checked;
+            const resEl = document.getElementById('result');
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (!username || !password) {
+                resEl.textContent = '❌ Kullanıcı adı ve şifre boş olamaz!';
+                return;
+            }
+
+            submitBtn.disabled = true;
+            resEl.textContent = 'Giriş yapılıyor, lütfen bekleyin...';
+
+            try {
+                if (useSupabase) {
+                    // ========================
+                    // SUPABASE AUTH İLE GİRİŞ
+                    // ========================
+                    if (!window.supabaseUtils || typeof window.supabaseUtils.signIn !== 'function') {
+                        throw new Error('supabase.js yüklenemedi. Dosyayı kontrol edin.');
+                    }
+
+                    const SUPABASE_URL = prompt('Supabase Project URL girin[](https://xyz.supabase.co)', '') || '';
+                    const SUPABASE_ANON_KEY = prompt('Supabase Anon Key girin', '') || '';
+
+                    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+                        throw new Error('Supabase URL veya Anon Key girilmedi.');
+                    }
+
+                    const result = await window.supabaseUtils.signIn(SUPABASE_URL, SUPABASE_ANON_KEY, username, password);
+
+                    if (result.ok && result.data?.access_token) {
+                        resEl.innerHTML = `✅ Supabase ile giriş başarılı!<br><small>Yetki: ${result.data.user?.role || 'Kullanıcı'}</small>`;
+
+                        // Session kaydet
+                        sessionStorage.setItem('atommod_supabase_session', JSON.stringify(result.data));
+                        sessionStorage.setItem('atommod_auth_type', 'supabase');
+
+                        // 1.5 saniye sonra status sayfasına yönlendir
+                        setTimeout(() => {
+                            window.location.href = 'status.html';
+                        }, 1500);
+                    }
+                    else {
+                        const errMsg = result.error?.message || 'Giriş başarısız. Bilgilerinizi kontrol edin.';
+                        resEl.textContent = `❌ ${errMsg}`;
+                    }
+                }
+                else {
+                    // ========================
+                    // BACKEND (AtomMod Plugin) İLE GİRİŞ
+                    // ========================
+                    const res = await fetch(baseUrl + '/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: username, password: password })
+                    });
+
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        resEl.textContent = `✅ Giriş başarılı! Yetki: ${data.permission || 'Belirtilmemiş'}`;
+
+                        sessionStorage.setItem('atommod_permission', data.permission || '');
+                        sessionStorage.setItem('atommod_auth_type', 'backend');
+                        sessionStorage.setItem('atommod_username', username);
+
+                        setTimeout(() => {
+                            window.location.href = 'status.html';
+                        }, 1500);
+                    }
+                    else {
+                        resEl.textContent = `❌ Giriş başarısız: ${data.error || data.message || 'Bilinmeyen hata'}`;
+                    }
+                }
+            }
+            catch (err) {
+                console.error(err);
+                resEl.textContent = `❌ Bir hata oluştu: ${err.message}`;
+            }
+            finally {
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>
