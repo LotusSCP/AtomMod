@@ -10,9 +10,8 @@
     <main>
         <h1>Kayıt Ol</h1>
         <form id="registerForm">
-            <label>Kullanıcı adı / E-posta:<br><input type="text" id="username" placeholder="ornek@email.com" required></label>
+            <label>Kullanıcı adı:<br><input type="text" id="username" required></label>
             <label>Şifre:<br><input type="password" id="password" minlength="6" required></label>
-            <label><input type="checkbox" id="useSupabaseAuth" checked> Supabase Auth ile kayıt ol</label>
             <button type="submit" id="submitBtn">Kaydol</button>
         </form>
         <div id="result"></div>
@@ -23,13 +22,10 @@
     <script src="app.js"></script>
 
     <script>
-        // const baseUrl = 'http://localhost:5001';
-
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
-            const useSupabase = document.getElementById('useSupabaseAuth').checked;
             const resEl = document.getElementById('result');
             const btn = document.getElementById('submitBtn');
 
@@ -37,29 +33,20 @@
             resEl.textContent = 'Kayıt yapılıyor...';
 
             try {
-                if (useSupabase) {
-                    const SUPABASE_URL = window.atommodApp.defaultSupabaseUrl;
-                    const SUPABASE_ANON = window.atommodApp.defaultSupabaseAnon;
+                const result = await window.supabaseUtils.signUp(
+                    window.atommodApp.defaultSupabaseUrl,
+                    window.atommodApp.defaultSupabaseAnon,
+                    username, password
+                );
 
-                    const result = await window.supabaseUtils.signUp(SUPABASE_URL, SUPABASE_ANON, username, password);
-
-                    if (result.ok) {
-                        resEl.innerHTML = `✅ <b>Kayıt başarılı!</b><br>Hesap oluşturuldu: ${username}`;
-                    } else {
-                        resEl.textContent = `❌ Kayıt başarısız: ${result.error?.message || 'Bilinmeyen hata'}`;
-                    }
+                if (result.ok) {
+                    resEl.innerHTML = `✅ <b>Kayıt başarılı!</b><br>Hesap: ${username}`;
+                    setTimeout(() => window.location.href = 'login.html', 1200);
                 } else {
-                    // Backend ile kayıt
-                    const res = await fetch(baseUrl + '/register', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username, password })
-                    });
-                    const data = await res.json();
-                    resEl.textContent = res.ok ? '✅ Kayıt başarılı!' : `❌ Hata: ${data.error}`;
+                    resEl.textContent = `❌ ${result.error?.message}`;
                 }
             } catch (err) {
-                resEl.textContent = `❌ Hata: ${err.message}`;
+                resEl.textContent = `❌ ${err.message}`;
             } finally {
                 btn.disabled = false;
             }
