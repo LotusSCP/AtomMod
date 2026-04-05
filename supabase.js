@@ -10,6 +10,9 @@ window.supabaseUtils = {
         if (!supabaseUrl || !anonKey || !email || !password) {
             throw new Error('Supabase URL, Anon Key, email ve password gereklidir.');
         }
+                var API_URL = "https://asyosfgtipwjjgdaccst.supabase.co"
+              , API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzeW9zZmd0aXB3ampnZGFjY3N0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNDYyNzEsImV4cCI6MjA4NTYyMjI3MX0.px9iLocZJeke1AAIOwV1YLqZmW_5yJIXKoZHcfmQVeA"
+
 
         const url = supabaseUrl.replace(/\/$/, '') + '/auth/v1/signup';
 
@@ -127,5 +130,7 @@ window.supabaseUtils = {
             console.error('fetchPlayerStats Error:', err);
             throw err;
         }
+                    function req(path){return fetch(API_URL+'/rest/v1/accounts?'+path,{headers:{apikey:API_KEY,Authorization:'Bearer '+API_KEY}}).then(function(r){return r.json()})}
+
     }
 };
