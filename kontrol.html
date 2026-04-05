@@ -6,37 +6,10 @@
     <title>AtomMod - Sunucu Kontrol</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        .admin-panel {
-            background: #111;
-            border: 2px solid #0f0;
-            border-radius: 10px;
-            padding: 25px;
-            margin: 20px 0;
-        }
-        .result {
-            margin-top: 15px;
-            padding: 12px;
-            border-radius: 6px;
-            min-height: 60px;
-            font-weight: bold;
-        }
-        select, input {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0;
-            background: #222;
-            color: white;
-            border: 1px solid #444;
-        }
-        button {
-            padding: 12px 25px;
-            font-size: 16px;
-            background: #0f0;
-            color: black;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
+        .admin-panel { background: #111; border: 2px solid #0f0; border-radius: 10px; padding: 25px; margin: 20px 0; }
+        .result { margin-top: 15px; padding: 12px; border-radius: 6px; min-height: 60px; font-weight: bold; }
+        select, input { width: 100%; padding: 10px; margin: 8px 0; background: #222; color: white; border: 1px solid #444; }
+        button { padding: 12px 25px; font-size: 16px; background: #0f0; color: black; border: none; border-radius: 6px; cursor: pointer; }
         button:hover { background: #0c0; }
     </style>
 </head>
@@ -59,7 +32,7 @@
             </label>
 
             <label>Argümanlar:<br>
-                <input type="text" id="commandArgs" placeholder="Örn: Hoş geldiniz oyuncular! veya 10">
+                <input type="text" id="commandArgs" placeholder="Örn: Hoş geldiniz!">
             </label>
 
             <button id="sendCommandBtn">🚀 Komutu Gönder</button>
@@ -74,10 +47,6 @@
     <script src="app.js"></script>
 
     <script>
-        // ========================
-        // YETKİ KONTROLÜ VE KOMUT GÖNDERME
-        // ========================
-
         async function getCurrentUserPermission() {
             const token = sessionStorage.getItem('supabase_access_token');
             if (!token) return 0;
@@ -106,42 +75,13 @@
             }
         }
 
-async function sendServerCommand(command, args = '') {
-    const baseUrl = window.atommodApp?.baseUrl || 'https://atommod.mcsunucun.com:29075';
-    const apiPath = '/api/command';   // Config'den almak istersen sonra genişletebiliriz
-
-    try {
-        const res = await fetch(`${baseUrl}${apiPath}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ command, args: args || '' })
-        });
-
-        if (!res.ok) {
-            const errorText = await res.text().catch(() => 'Sunucu hatası');
-            throw new Error(errorText);
-        }
-
-        const text = await res.text();
-        return { ok: true, message: text || 'Komut başarıyla gönderildi.' };
-    } catch (err) {
-        return { 
-            ok: false, 
-            message: 'Sunucuya bağlanılamadı.<br>Hata: ' + err.message 
-        };
-    }
-}
-
-        // ========================
-        // SAYFA YÜKLENDİĞİNDE
-        // ========================
         window.addEventListener('load', async () => {
             const permission = await getCurrentUserPermission();
             const infoEl = document.getElementById('permissionInfo');
             const resultEl = document.getElementById('commandResult');
 
             if (permission >= 5) {
-                infoEl.textContent = `✅ Giriş başarılı - Yetkiniz: ${permission} (Kontrol yetkisi aktif)`;
+                infoEl.textContent = `✅ Yetkiniz: ${permission} (Uzaktan kontrol aktif)`;
             } else {
                 infoEl.style.color = 'red';
                 infoEl.textContent = `❌ Yetkiniz yetersiz (${permission}). Bu sayfayı kullanamazsınız.`;
@@ -149,10 +89,10 @@ async function sendServerCommand(command, args = '') {
                 return;
             }
 
-            // Komut gönderme butonu
             document.getElementById('sendCommandBtn').addEventListener('click', async () => {
                 const cmd = document.getElementById('commandSelect').value;
                 const args = document.getElementById('commandArgs').value.trim();
+                const resultEl = document.getElementById('commandResult');
 
                 resultEl.style.color = '#ff0';
                 resultEl.innerHTML = '⏳ Komut gönderiliyor...';
@@ -167,8 +107,6 @@ async function sendServerCommand(command, args = '') {
                     resultEl.innerHTML = `❌ ${res.message}`;
                 }
             });
-
-            console.log('✅ Kontrol sayfası yüklendi.');
         });
     </script>
 </body>
