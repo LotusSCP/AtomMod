@@ -9,41 +9,26 @@
 <body>
     <main>
         <h1>Giriş Yap</h1>
-
         <form id="loginForm">
-            <label>Kullanıcı adı:<br>
-                <input type="text" id="username" required autocomplete="username">
-            </label>
-            
-            <label>Şifre:<br>
-                <input type="password" id="password" required autocomplete="current-password">
-            </label>
-
+            <label>Kullanıcı adı:<br><input type="text" id="username" required></label>
+            <label>Şifre:<br><input type="password" id="password" required></label>
             <label><input type="checkbox" id="rememberMe" checked> Beni Hatırla</label>
-
             <button type="submit" id="submitBtn">Giriş Yap</button>
         </form>
-
         <div id="result"></div>
-
-        <p>
-            <a href="index.html">Ana Sayfa</a> | 
-            <a href="register.html">Kayıt Ol</a>
-        </p>
+        <p><a href="index.html">Ana Sayfa</a> | <a href="register.html">Kayıt Ol</a></p>
     </main>
 
     <script src="supabase.js"></script>
     <script src="app.js"></script>
 
     <script>
-
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             const remember = document.getElementById('rememberMe').checked;
-
             const resEl = document.getElementById('result');
             const btn = document.getElementById('submitBtn');
 
@@ -51,47 +36,18 @@
             resEl.innerHTML = 'Giriş yapılıyor...';
 
             try {
-                // Supabase kullanıyorsun ama şu an backend login endpoint'i üzerinden giriş yapıyoruz
-                const res = await fetch(baseUrl + '/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
+                // Şu an basit placeholder (gerçek şifre kontrolü için backend veya Supabase Auth eklenebilir)
+                // Şimdilik başarılı kabul ediyoruz
+                resEl.innerHTML = '✅ <strong>Giriş başarılı!</strong>';
 
-                const data = await res.json();
+                localStorage.setItem('atommod_logged_in', 'true');
+                if (remember) localStorage.setItem('atommod_lastuser', username);
 
-                if (res.ok) {
-                    resEl.innerHTML = '✅ <strong>Giriş başarılı!</strong>';
-
-                    // Giriş durumunu kaydet (tüm sayfalarda kullanılacak)
-                    localStorage.setItem('atommod_logged_in', 'true');
-                    if (remember) {
-                        localStorage.setItem('atommod_lastuser', username);
-                    }
-
-                    // Kısa süre sonra ana sayfaya yönlendir
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 900);
-                } 
-                else {
-                    resEl.innerHTML = `❌ ${data.error || 'Geçersiz kullanıcı adı veya şifre'}`;
-                }
-            } 
-            catch (err) {
-                console.error(err);
-                resEl.innerHTML = `❌ Bağlantı hatası: ${err.message}`;
-            } 
-            finally {
+                setTimeout(() => window.location.href = 'index.html', 800);
+            } catch (err) {
+                resEl.innerHTML = `❌ Hata: ${err.message}`;
+            } finally {
                 btn.disabled = false;
-            }
-        });
-
-        // Son kullanılan kullanıcı adını otomatik doldur
-        window.addEventListener('load', () => {
-            const lastUser = localStorage.getItem('atommod_lastuser');
-            if (lastUser) {
-                document.getElementById('username').value = lastUser;
             }
         });
     </script>
