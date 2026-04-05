@@ -106,30 +106,31 @@
             }
         }
 
-        async function sendServerCommand(command, args = '') {
-            const apiBase = 'https://atommod.mcsunucun.com:29075';
+async function sendServerCommand(command, args = '') {
+    const baseUrl = window.atommodApp?.baseUrl || 'https://atommod.mcsunucun.com:29075';
+    const apiPath = '/api/command';   // Config'den almak istersen sonra genişletebiliriz
 
-            try {
-                const res = await fetch(`${apiBase}/api/command`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ command, args: args || '' })
-                });
+    try {
+        const res = await fetch(`${baseUrl}${apiPath}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ command, args: args || '' })
+        });
 
-                if (!res.ok) {
-                    const errorText = await res.text().catch(() => 'Sunucu hatası');
-                    throw new Error(errorText);
-                }
-
-                const text = await res.text();
-                return { ok: true, message: text || 'Komut başarıyla gönderildi.' };
-            } catch (err) {
-                return { 
-                    ok: false, 
-                    message: 'Sunucuya bağlanılamadı.<br>Hata: ' + err.message 
-                };
-            }
+        if (!res.ok) {
+            const errorText = await res.text().catch(() => 'Sunucu hatası');
+            throw new Error(errorText);
         }
+
+        const text = await res.text();
+        return { ok: true, message: text || 'Komut başarıyla gönderildi.' };
+    } catch (err) {
+        return { 
+            ok: false, 
+            message: 'Sunucuya bağlanılamadı.<br>Hata: ' + err.message 
+        };
+    }
+}
 
         // ========================
         // SAYFA YÜKLENDİĞİNDE
