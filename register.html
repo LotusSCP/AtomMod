@@ -41,15 +41,18 @@
                     password
                 );
 
-                if (result && result.ok) {
-                    resEl.innerHTML = `✅ <b>Kayıt başarılı!</b><br>Hesap oluşturuldu: ${username}`;
-                    setTimeout(() => window.location.href = 'login.html', 1500);
+                console.log("SignUp Result:", result);   // Konsolda detay görmek için
+
+                if (result && result.ok === true) {
+                    resEl.innerHTML = `✅ <b>Kayıt başarılı!</b><br>Hesap: ${username}<br>Şimdi giriş yapabilirsiniz.`;
+                    setTimeout(() => window.location.href = 'login.html', 1800);
                 } else {
-                    resEl.innerHTML = `❌ Kayıt başarısız: ${result?.error?.message || 'Bilinmeyen hata'}`;
+                    const errorMsg = result?.error?.message || 'Bilinmeyen hata';
+                    resEl.innerHTML = `❌ Kayıt başarısız: ${errorMsg}`;
                 }
             } catch (err) {
-                console.error(err);
-                resEl.innerHTML = `❌ Hata: ${err.message}`;
+                console.error("Kayıt hatası:", err);
+                resEl.innerHTML = `❌ Beklenmeyen hata: ${err.message}`;
             } finally {
                 btn.disabled = false;
             }
