@@ -1,4 +1,5 @@
-// supabase.js - Sadece Supabase kullanıyoruz
+// supabase.js - AtomMod Supabase + Web API
+
 window.supabaseUtils = {
 
     // ========================
@@ -30,11 +31,7 @@ window.supabaseUtils = {
 
             const text = await response.text();
             let data;
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                data = text;
-            }
+            try { data = JSON.parse(text); } catch (e) { data = text; }
 
             if (!response.ok) {
                 const errorMsg = data?.message || data?.error || data?.details || 'Kayıt başarısız';
@@ -56,41 +53,9 @@ window.supabaseUtils = {
             };
         }
     },
-    // supabase.js dosyasında bu fonksiyonu güncelle veya ekle
-async function sendServerCommand(command, args = '') {
-    // Web panelinle aynı adresi kullanıyoruz (port dahil)
-    const apiBase = 'https://atommod.mcsunucun.com:29075';
-
-    try {
-        const res = await fetch(`${apiBase}/api/command`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                command: command,
-                args: args || ''
-            })
-        });
-
-        if (!res.ok) {
-            const errorText = await res.text().catch(() => 'Bilinmeyen hata');
-            throw new Error(errorText);
-        }
-
-        const text = await res.text();
-        return { ok: true, message: text || 'Komut başarıyla gönderildi.' };
-    } catch (err) {
-        console.error('Command error:', err);
-        return { 
-            ok: false, 
-            message: 'Sunucuya ulaşılamadı. Lütfen daha sonra tekrar deneyin.<br>Hata: ' + err.message 
-        };
-    }
-}
 
     // ========================
-    // SUNUCU DURUMU (Supabase'den)
+    // SUNUCU DURUMU
     // ========================
     async fetchServerStatus(supabaseUrl, anonKey) {
         if (!supabaseUrl || !anonKey) {
@@ -123,3 +88,42 @@ async function sendServerCommand(command, args = '') {
         }
     }
 };
+
+// ========================
+// YENİ: SUNUCU KOMUT GÖNDERME (kontrol.html için)
+// ========================
+async function sendServerCommand(command, args = '') {
+    const baseUrl = window.atommodApp?.baseUrl || 'https://atommod.mcsunucun.com:29075';
+    
+    try {
+        const res = await fetch(`${baseUrl}/api/command`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                command: command,
+                args: args || ''
+            })
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text().catch(() => 'Sunucu hatası');
+            throw new Error(errorText);
+        }
+
+        const text = await res.text();
+        return { ok: true, message: text || 'Komut başarıyla gönderildi.' };
+    } catch (err) {
+        console.error('sendServerCommand Error:', err);
+        return { 
+            ok: false, 
+            message: 'Sunucuya bağlanılamadı.<br>Hata: ' + err.message 
+        };
+    }
+}
+
+// Global olarak erişilebilir yap
+window.sendServerCommand = sendServerCommand;
+
+console.log('✅ supabase.js yüklendi - signUp + sendServerCommand hazır.');
