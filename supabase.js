@@ -5,29 +5,31 @@ window.supabaseUtils = {
     // ========================
     // KAYIT OL
     // ========================
-    async signUp(supabaseUrl, anonKey, username, password) {
-        if (!supabaseUrl || !anonKey || !username || !password) {
-            throw new Error('Supabase URL, Anon Key, username ve password gereklidir.');
-        }
+async signUp(supabaseUrl, anonKey, username, password) {
+    if (!supabaseUrl || !anonKey || !username || !password) {
+        throw new Error('Supabase URL, Anon Key, username ve password gereklidir.');
+    }
 
-        const url = supabaseUrl.replace(/\/$/, '') + '/rest/v1/accounts';
+    const url = supabaseUrl.replace(/\/$/, '') + '/rest/v1/accounts';
 
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': anonKey,
-                    'Authorization': `Bearer ${anonKey}`,
-                    'Prefer': 'resolution=merge-duplicates'
-                },
-                body: JSON.stringify({
-                    username: username,
-                    email: username,   // email zorunlu olduğu için varsayılan oluşturuyoruz
-                    password: password,
-                    permission: 1
-                })
-            });
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': anonKey,
+                'Authorization': `Bearer ${anonKey}`,
+                'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify({
+                username: username,
+                // email: username,   ← BU SATIRI SİL veya yorum satırı yap
+                password: password,
+                permission: 1
+            })
+        });
+
+        // ... geri kalan kod aynı kalabilir
 
             const text = await response.text();
             let data;
