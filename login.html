@@ -19,10 +19,7 @@
                 <input type="password" id="password" required autocomplete="current-password">
             </label>
 
-            <label><input type="checkbox" id="rememberMe"> Beni Hatırla</label>
-            
-            <!-- Supabase Auth seçeneğini geçici olarak devre dışı bıraktık çünkü backend login daha stabil -->
-            <!-- <label><input type="checkbox" id="useSupabaseAuth" checked> Supabase Auth kullan</label> -->
+            <label><input type="checkbox" id="rememberMe" checked> Beni Hatırla</label>
 
             <button type="submit" id="submitBtn">Giriş Yap</button>
         </form>
@@ -39,6 +36,7 @@
     <script src="app.js"></script>
 
     <script>
+        const baseUrl = 'http://localhost:5001';
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -46,7 +44,6 @@
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             const remember = document.getElementById('rememberMe').checked;
-            // const useSupabase = document.getElementById('useSupabaseAuth').checked; // şu an kullanılmıyor
 
             const resEl = document.getElementById('result');
             const btn = document.getElementById('submitBtn');
@@ -55,7 +52,7 @@
             resEl.innerHTML = 'Giriş yapılıyor...';
 
             try {
-                // Şu anda Supabase Auth yerine backend login kullanıyoruz (daha stabil)
+                // Supabase kullanıyorsun ama şu an backend login endpoint'i üzerinden giriş yapıyoruz
                 const res = await fetch(baseUrl + '/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -67,16 +64,16 @@
                 if (res.ok) {
                     resEl.innerHTML = '✅ <strong>Giriş başarılı!</strong>';
 
-                    // Giriş başarılı olduğunu kaydet (butonları gizlemek için)
+                    // Giriş durumunu kaydet (tüm sayfalarda kullanılacak)
                     localStorage.setItem('atommod_logged_in', 'true');
                     if (remember) {
                         localStorage.setItem('atommod_lastuser', username);
                     }
 
-                    // 800ms sonra ana sayfaya yönlendir
+                    // Kısa süre sonra ana sayfaya yönlendir
                     setTimeout(() => {
                         window.location.href = 'index.html';
-                    }, 800);
+                    }, 900);
                 } 
                 else {
                     resEl.innerHTML = `❌ ${data.error || 'Geçersiz kullanıcı adı veya şifre'}`;
@@ -91,7 +88,7 @@
             }
         });
 
-        // Sayfa yüklendiğinde son kullanılan kullanıcı adını doldur
+        // Son kullanılan kullanıcı adını otomatik doldur
         window.addEventListener('load', () => {
             const lastUser = localStorage.getItem('atommod_lastuser');
             if (lastUser) {
