@@ -10,10 +10,10 @@ window.supabaseUtils = {
         if (!supabaseUrl || !anonKey || !email || !password) {
             throw new Error('Supabase URL, Anon Key, email ve password gereklidir.');
         }
-                var API_URL = "https://asyosfgtipwjjgdaccst.supabase.co"
-              , API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzeW9zZmd0aXB3ampnZGFjY3N0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNDYyNzEsImV4cCI6MjA4NTYyMjI3MX0.px9iLocZJeke1AAIOwV1YLqZmW_5yJIXKoZHcfmQVeA"
-                var supabaseUrl = "https://asyosfgtipwjjgdaccst.supabase.co"
-              , anonkey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzeW9zZmd0aXB3ampnZGFjY3N0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNDYyNzEsImV4cCI6MjA4NTYyMjI3MX0.px9iLocZJeke1AAIOwV1YLqZmW_5yJIXKoZHcfmQVeA"
+                var API_URL = "https://kdvvvldbetjthldhodab.supabase.co"
+              , API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkdnZ2bGRiZXRqdGhsZGhvZGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNjA3NDIsImV4cCI6MjA5MDYzNjc0Mn0.o0WFi9ZYYGkInwFccMruvGYShAO_tQUpMKh_FqLgqBA"
+                var supabaseUrl = "https://kdvvvldbetjthldhodab.supabase.co"
+              , anonkey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkdnZ2bGRiZXRqdGhsZGhvZGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNjA3NDIsImV4cCI6MjA5MDYzNjc0Mn0.o0WFi9ZYYGkInwFccMruvGYShAO_tQUpMKh_FqLgqBA"
 
 
         // const url = supabaseUrl.replace(/\/$/, '') + '/auth/v1/signup';
