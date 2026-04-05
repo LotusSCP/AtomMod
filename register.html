@@ -24,29 +24,32 @@
     <script>
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             const resEl = document.getElementById('result');
             const btn = document.getElementById('submitBtn');
 
             btn.disabled = true;
-            resEl.textContent = 'Kayıt yapılıyor...';
+            resEl.innerHTML = 'Kayıt yapılıyor...';
 
             try {
                 const result = await window.supabaseUtils.signUp(
                     window.atommodApp.defaultSupabaseUrl,
                     window.atommodApp.defaultSupabaseAnon,
-                    username, password
+                    username,
+                    password
                 );
 
-                if (result.ok) {
-                    resEl.innerHTML = `✅ <b>Kayıt başarılı!</b><br>Hesap: ${username}`;
-                    setTimeout(() => window.location.href = 'login.html', 1200);
+                if (result && result.ok) {
+                    resEl.innerHTML = `✅ <b>Kayıt başarılı!</b><br>Hesap oluşturuldu: ${username}`;
+                    setTimeout(() => window.location.href = 'login.html', 1500);
                 } else {
-                    resEl.textContent = `❌ ${result.error?.message}`;
+                    resEl.innerHTML = `❌ Kayıt başarısız: ${result?.error?.message || 'Bilinmeyen hata'}`;
                 }
             } catch (err) {
-                resEl.textContent = `❌ ${err.message}`;
+                console.error(err);
+                resEl.innerHTML = `❌ Hata: ${err.message}`;
             } finally {
                 btn.disabled = false;
             }
