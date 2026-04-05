@@ -19,12 +19,6 @@
         <h2>Online Oyuncular</h2>
         <div id="players"></div>
 
-        <div id="commandSection" style="margin-top:20px;">
-            <h3>Siteden Komut Gönder</h3>
-            <input id="commandInput" placeholder="ra adminchat Merhaba" style="width:70%">
-            <button id="sendCmdBtn">Gönder</button>
-        </div>
-
         <button id="refresh">Yenile</button>
         <p><a href="index.html">Ana Sayfa</a></p>
     </main>
@@ -33,18 +27,24 @@
     <script src="app.js"></script>
 
     <script>
+        // currentPermission global olarak bir kez tanımlanıyor
         let currentPermission = 0;
 
         async function loadStatus() {
-            const SUPABASE_URL = window.atommodApp.defaultSupabaseUrl;
-            const SUPABASE_ANON = window.atommodApp.defaultSupabaseAnon;
+            const SUPABASE_URL = window.atommodApp?.defaultSupabaseUrl;
+            const SUPABASE_ANON = window.atommodApp?.defaultSupabaseAnon;
+
+            const statusEl = document.getElementById('serverIp');
+            const countEl = document.getElementById('playerCount');
+            const playersEl = document.getElementById('players');
+
+            playersEl.innerHTML = 'Yükleniyor...';
 
             try {
                 const data = await window.supabaseUtils.fetchServerStatus(SUPABASE_URL, SUPABASE_ANON);
 
-                document.getElementById('playerCount').textContent = data.length;
+                countEl.textContent = data.length;
 
-                // İlk kayıttan server bilgilerini al (hepsi aynı sunucuda ise)
                 if (data.length > 0) {
                     document.getElementById('serverIp').textContent = data[0].server_ip || 'Bilinmiyor';
                     document.getElementById('serverNumber').textContent = data[0].server_number || '1';
@@ -52,43 +52,16 @@
 
                 let html = '<strong>Online Oyuncular:</strong><br>';
                 data.forEach(p => {
-                    html += `
-                        <div style="margin:4px 0;">
-                            • ${p.nickname} 
-                            <button onclick="kick('${p.nickname}')" style="font-size:10px;">KICK</button>
-                            <button onclick="ban('${p.nickname}')" style="font-size:10px;color:red;">BAN</button>
-                        </div>`;
+                    html += `• ${p.nickname} (${p.total_play_seconds || 0}s)<br>`;
                 });
-                document.getElementById('players').innerHTML = html || 'Şu anda kimse online değil.';
+
+                playersEl.innerHTML = html || 'Şu anda kimse online değil.';
 
             } catch (err) {
                 console.error(err);
-                document.getElementById('players').textContent = 'Supabase bağlantı hatası.';
+                playersEl.innerHTML = `Hata: ${err.message}`;
             }
         }
-
-        window.kick = async function(nickname) {
-            if (currentPermission < 500) return alert('Yetkiniz yetersiz!');
-            if (!confirm(`${nickname} kicklensin mi?`)) return;
-            const res = await window.supabaseUtils.kickPlayer(baseUrl, nickname, "Site üzerinden kick", localStorage.getItem('atommod_lastuser'));
-            alert(res.ok ? 'Kick gönderildi' : 'Hata');
-            loadStatus();
-        };
-
-        window.ban = async function(nickname) {
-            if (currentPermission < 1000) return alert('Yetkiniz yetersiz! (Ban için daha yüksek yetki gerekir)');
-            if (!confirm(`${nickname} banlansın mı?`)) return;
-            const res = await window.supabaseUtils.banPlayer(baseUrl, nickname, "Site üzerinden ban", localStorage.getItem('atommod_lastuser'));
-            alert(res.ok ? 'Ban gönderildi' : 'Hata');
-            loadStatus();
-        };
-
-        document.getElementById('sendCmdBtn').addEventListener('click', async () => {
-            const cmd = document.getElementById('commandInput').value.trim();
-            if (!cmd || currentPermission < 500) return alert('Yetkiniz yetersiz veya komut boş!');
-            const res = await window.supabaseUtils.sendCommand(baseUrl, cmd, localStorage.getItem('atommod_lastuser'));
-            alert(res.ok ? 'Komut gönderildi!' : 'Hata');
-        });
 
         document.getElementById('refresh').addEventListener('click', loadStatus);
         window.addEventListener('load', loadStatus);
