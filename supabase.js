@@ -23,7 +23,7 @@ async signUp(supabaseUrl, anonKey, username, password) {
             },
             body: JSON.stringify({
                 username: username,
-                // email: username,   ← BU SATIRI SİL veya yorum satırı yap
+                email: username,
                 password: password,
                 permission: 1
             })
