@@ -23,7 +23,7 @@ window.supabaseUtils = {
                 },
                 body: JSON.stringify({
                     username: username,
-                    email: username + "@atommod.local",   // email zorunlu olduğu için varsayılan oluşturuyoruz
+                    email: username + "@atommod.com",   // email zorunlu olduğu için varsayılan oluşturuyoruz
                     password: password,
                     permission: 1
                 })
