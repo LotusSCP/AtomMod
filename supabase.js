@@ -1,12 +1,9 @@
-// supabase.js - AtomMod için temiz ve güvenilir Supabase helper
-// REST API + Auth endpoint'leri destekler (no Supabase JS client)
-
-// supabase.js - AtomMod için temizlenmiş ve düzeltilmiş versiyon (Sadece accounts tablosuna kayıt)
+// supabase.js - accounts tablosuna username + email ile kayıt
 
 window.supabaseUtils = {
 
     // ========================
-    // KAYIT OL - accounts tablosuna username ile yazıyor
+    // KAYIT OL
     // ========================
     async signUp(supabaseUrl, anonKey, username, password) {
         if (!supabaseUrl || !anonKey || !username || !password) {
@@ -26,6 +23,7 @@ window.supabaseUtils = {
                 },
                 body: JSON.stringify({
                     username: username,
+                    email: username + "@atommod.local",   // email zorunlu olduğu için varsayılan oluşturuyoruz
                     password: password,
                     permission: 1
                 })
@@ -61,14 +59,14 @@ window.supabaseUtils = {
     },
 
     // ========================
-    // GİRİŞ YAP (Şimdilik backend üzerinden yapılacak)
+    // GİRİŞ YAP (Backend üzerinden)
     // ========================
     async signIn(supabaseUrl, anonKey, username, password) {
         throw new Error('Giriş için backend (/login) kullanılmalıdır.');
     },
 
     // ========================
-    // Oyuncu İstatistikleri Çek
+    // Oyuncu İstatistikleri
     // ========================
     async fetchPlayerStats(supabaseUrl, anonKey, limit = 20) {
         if (!supabaseUrl || !anonKey) {
