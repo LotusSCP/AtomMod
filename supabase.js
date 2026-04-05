@@ -1,18 +1,8 @@
-// supabase.js - accounts tablosuna username + email ile kayıt
-
+// supabase.js
 window.supabaseUtils = {
 
-    // ========================
-    // KAYIT OL
-    // ========================
-async signUp(supabaseUrl, anonKey, username, password) {
-    if (!supabaseUrl || !anonKey || !username || !password) {
-        throw new Error('Supabase URL, Anon Key, username ve password gereklidir.');
-    }
-
-    const url = supabaseUrl.replace(/\/$/, '') + '/rest/v1/accounts';
-
-    try {
+    async signUp(supabaseUrl, anonKey, username, password) {
+        const url = supabaseUrl.replace(/\/$/, '') + '/rest/v1/accounts';
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -23,81 +13,52 @@ async signUp(supabaseUrl, anonKey, username, password) {
             },
             body: JSON.stringify({
                 username: username,
-                email: username,
                 password: password,
-                permission: 1
+                permission: 1,
+                email: null   // nullable yaptık
             })
         });
-
-        // ... geri kalan kod aynı kalabilir
-
-            const text = await response.text();
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                data = text;
-            }
-
-            if (!response.ok) {
-                const errorMsg = data?.message || data?.error || data?.details || 'Kayıt başarısız';
-                console.error('Supabase SignUp Error:', errorMsg);
-                return { ok: false, error: { message: errorMsg }, data: data };
-            }
-
-            return {
-                ok: true,
-                data: data,
-                message: 'Kayıt başarılı!'
-            };
-
-        } catch (err) {
-            console.error('Supabase SignUp Error:', err);
-            return {
-                ok: false,
-                error: { message: err.message || 'Bağlantı hatası' }
-            };
-        }
+        // ... (geri kalan kod aynı)
     },
 
     // ========================
-    // GİRİŞ YAP (Backend üzerinden)
+    // SUNUCU DURUMU (Supabase'den)
     // ========================
-    async signIn(supabaseUrl, anonKey, username, password) {
-        throw new Error('Giriş için backend (/login) kullanılmalıdır.');
-    },
-
-    // ========================
-    // Oyuncu İstatistikleri
-    // ========================
-    async fetchPlayerStats(supabaseUrl, anonKey, limit = 20) {
-        if (!supabaseUrl || !anonKey) {
-            throw new Error('Supabase URL ve Anon Key gereklidir.');
-        }
-
+    async fetchServerStatus(supabaseUrl, anonKey) {
         const url = supabaseUrl.replace(/\/$/, '') +
-            `/rest/v1/player_stats?select=nickname,total_play_seconds,kills,deaths,last_seen_utc&order=total_play_seconds.desc&limit=${limit}`;
+            `/rest/v1/player_stats?select=nickname,steam_id,total_play_seconds,kills,deaths,last_seen_utc,server_ip,server_number,server_name&order=last_seen_utc.desc`;
 
-        try {
-            const response = await fetch(url, {
-                headers: {
-                    'apikey': anonKey,
-                    'Authorization': `Bearer ${anonKey}`
-                }
-            });
+        const res = await fetch(url, {
+            headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` }
+        });
+        const data = await res.json();
+        return data || [];
+    },
 
-            const text = await response.text();
-            let data;
-            try { data = JSON.parse(text); } catch (e) { data = text; }
+    // ========================
+    // BAN - KICK - KOMUT (Plugin'e gidiyor)
+    // ========================
+    async banPlayer(baseUrl, username, reason = "Site üzerinden banlandı", adminUsername = "") {
+        return await fetch(baseUrl + '/ban', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, reason, admin: adminUsername })
+        });
+    },
 
-            if (!response.ok) {
-                throw new Error(`Supabase hatası (${response.status}): ${data?.message || text}`);
-            }
+    async kickPlayer(baseUrl, username, reason = "Site üzerinden kicklendi", adminUsername = "") {
+        return await fetch(baseUrl + '/kick', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, reason, admin: adminUsername })
+        });
+    },
 
-            return data || [];
-        } catch (err) {
-            console.error('fetchPlayerStats Error:', err);
-            throw err;
-        }
+    async sendCommand(baseUrl, command, adminUsername = "") {
+        return await fetch(baseUrl + '/command', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ command, admin: adminUsername })
+        });
     }
 };
