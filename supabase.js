@@ -18,6 +18,8 @@ window.supabaseUtils = {
 
         const url = supabaseUrl.replace(/\/$/, '') + '/auth/v1/signup';
 
+        const url = supabaseUrl.replace(/\/$/, '') + '/rest/v1/accounts';
+
         try {
             const response = await fetch(url, {
                 method: 'POST',
