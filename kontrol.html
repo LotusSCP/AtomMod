@@ -157,7 +157,7 @@ async function sendServerCommand(command, args = '') {
                 resultEl.style.color = '#ff0';
                 resultEl.innerHTML = '⏳ Komut gönderiliyor...';
 
-                const res = await sendServerCommand(cmd, args);
+                const res = await window.sendServerCommand(cmd, args);
 
                 if (res.ok) {
                     resultEl.style.color = 'lime';
