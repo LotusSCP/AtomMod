@@ -3,6 +3,23 @@
 function escapeHtml(s) {
     return String(s).replace(/[&<>\"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#39;" })[c]);
 }
+// Giriş kontrolü (basit client-side)
+function checkLoginStatus() {
+    const isLoggedIn = localStorage.getItem('atommod_logged_in') === 'true'; // veya token kontrolü
+
+    const loginLink = document.getElementById('loginLink');
+    const registerLink = document.getElementById('registerLink');
+
+    if (isLoggedIn) {
+        if (loginLink) loginLink.style.display = 'none';
+        if (registerLink) registerLink.style.display = 'none';
+        
+        // İsteğe bağlı: "Çıkış Yap" butonu ekleyebilirsin
+    }
+}
+
+// Sayfa yüklendiğinde çalıştır
+window.addEventListener('load', checkLoginStatus);
 
 function currentPermission() {
     return Number(sessionStorage.getItem('atommod_permission') || 0);
