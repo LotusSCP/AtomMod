@@ -20,16 +20,13 @@
         <div id="players"></div>
 
         <button id="refresh">Yenile</button>
-        <p><a href="index.html">Ana Sayfa</a></p>
+        <p><a href="index.html">Ana Sayfa</a> | <a href="kontrol.html">Sunucu Kontrol</a></p>
     </main>
 
     <script src="supabase.js"></script>
     <script src="app.js"></script>
 
     <script>
-        // currentPermission global olarak bir kez tanımlanıyor
-        let currentPermission = 0;
-
         async function loadStatus() {
             const SUPABASE_URL = window.atommodApp?.defaultSupabaseUrl;
             const SUPABASE_ANON = window.atommodApp?.defaultSupabaseAnon;
