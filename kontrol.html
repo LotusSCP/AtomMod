@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AtomMod - Sunucu Kontrol</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .admin-panel {
+            background: #111;
+            border: 2px solid #0f0;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 6px;
+            min-height: 60px;
+            font-weight: bold;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            background: #222;
+            color: white;
+            border: 1px solid #444;
+        }
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            background: #0f0;
+            color: black;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover { background: #0c0; }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>🛠 Sunucu Uzaktan Kontrol</h1>
+        <p id="permissionInfo" style="color: lime; font-weight: bold;"></p>
+
+        <div class="admin-panel">
+            <label>Komut Türü:<br>
+                <select id="commandSelect">
+                    <option value="broadcast">Broadcast Mesajı</option>
+                    <option value="bc">Kısa Broadcast (bc)</option>
+                    <option value="roundrestart">Round Restart</option>
+                    <option value="cassie">Cassie Mesajı</option>
+                    <option value="nuke">Nuke Başlat</option>
+                    <option value="stopnuke">Nuke Durdur</option>
+                    <option value="raw">Raw Komut (Dikkat!)</option>
+                </select>
+            </label>
+
+            <label>Argümanlar:<br>
+                <input type="text" id="commandArgs" placeholder="Örn: Hoş geldiniz oyuncular! veya 10">
+            </label>
+
+            <button id="sendCommandBtn">🚀 Komutu Gönder</button>
+            
+            <div id="commandResult" class="result"></div>
+        </div>
+
+        <p><a href="index.html">← Ana Sayfa</a> | <a href="status.html">Sunucu Durumu</a></p>
+    </main>
+
+    <script src="supabase.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+        // ========================
+        // YETKİ KONTROLÜ VE KOMUT GÖNDERME
+        // ========================
+
+        async function getCurrentUserPermission() {
+            const token = sessionStorage.getItem('supabase_access_token');
+            if (!token) return 0;
+
+            const SUPABASE_URL = window.atommodApp?.defaultSupabaseUrl;
+            const SUPABASE_ANON = window.atommodApp?.defaultSupabaseAnon;
+
+            if (!SUPABASE_URL || !SUPABASE_ANON) return 0;
+
+            const url = SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/accounts?select=permission&limit=1';
+
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'apikey': SUPABASE_ANON,
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) return 0;
+                const data = await response.json();
+                return data && data.length > 0 ? (data[0].permission || 0) : 0;
+            } catch (err) {
+                console.error('Permission check error:', err);
+                return 0;
+            }
+        }
+
+        async function sendServerCommand(command, args = '') {
+            const apiBase = 'https://atommod.mcsunucun.com:29075';
+
+            try {
+                const res = await fetch(`${apiBase}/api/command`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command, args: args || '' })
+                });
+
+                if (!res.ok) {
+                    const errorText = await res.text().catch(() => 'Sunucu hatası');
+                    throw new Error(errorText);
+                }
+
+                const text = await res.text();
+                return { ok: true, message: text || 'Komut başarıyla gönderildi.' };
+            } catch (err) {
+                return { 
+                    ok: false, 
+                    message: 'Sunucuya bağlanılamadı.<br>Hata: ' + err.message 
+                };
+            }
+        }
+
+        // ========================
+        // SAYFA YÜKLENDİĞİNDE
+        // ========================
+        window.addEventListener('load', async () => {
+            const permission = await getCurrentUserPermission();
+            const infoEl = document.getElementById('permissionInfo');
+            const resultEl = document.getElementById('commandResult');
+
+            if (permission >= 5) {
+                infoEl.textContent = `✅ Giriş başarılı - Yetkiniz: ${permission} (Kontrol yetkisi aktif)`;
+            } else {
+                infoEl.style.color = 'red';
+                infoEl.textContent = `❌ Yetkiniz yetersiz (${permission}). Bu sayfayı kullanamazsınız.`;
+                document.getElementById('sendCommandBtn').disabled = true;
+                return;
+            }
+
+            // Komut gönderme butonu
+            document.getElementById('sendCommandBtn').addEventListener('click', async () => {
+                const cmd = document.getElementById('commandSelect').value;
+                const args = document.getElementById('commandArgs').value.trim();
+
+                resultEl.style.color = '#ff0';
+                resultEl.innerHTML = '⏳ Komut gönderiliyor...';
+
+                const res = await sendServerCommand(cmd, args);
+
+                if (res.ok) {
+                    resultEl.style.color = 'lime';
+                    resultEl.innerHTML = `✅ ${res.message}`;
+                } else {
+                    resultEl.style.color = 'red';
+                    resultEl.innerHTML = `❌ ${res.message}`;
+                }
+            });
+
+            console.log('✅ Kontrol sayfası yüklendi.');
+        });
+    </script>
+</body>
+</html>
