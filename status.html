@@ -11,12 +11,19 @@
         <h1>Sunucu Durumu</h1>
 
         <div id="serverInfo">
-            <p><strong>Sunucu:</strong> <span id="serverStatus">Yükleniyor...</span></p>
+            <p><strong>Sunucu IP:</strong> <span id="serverIp">Yükleniyor...</span></p>
+            <p><strong>Sunucu No:</strong> <span id="serverNumber">-</span></p>
             <p><strong>Online Oyuncu:</strong> <span id="playerCount">0</span></p>
         </div>
 
         <h2>Online Oyuncular</h2>
         <div id="players"></div>
+
+        <div id="commandSection" style="margin-top:20px;">
+            <h3>Siteden Komut Gönder</h3>
+            <input id="commandInput" placeholder="ra adminchat Merhaba" style="width:70%">
+            <button id="sendCmdBtn">Gönder</button>
+        </div>
 
         <button id="refresh">Yenile</button>
         <p><a href="index.html">Ana Sayfa</a></p>
@@ -27,47 +34,62 @@
 
     <script>
         const baseUrl = 'http://localhost:5001';
+        let currentPermission = 0;
 
         async function loadStatus() {
-            const statusEl = document.getElementById('serverStatus');
-            const countEl = document.getElementById('playerCount');
-            const playersEl = document.getElementById('players');
-
-            statusEl.textContent = 'Yükleniyor...';
-            playersEl.innerHTML = '';
+            const SUPABASE_URL = window.atommodApp.defaultSupabaseUrl;
+            const SUPABASE_ANON = window.atommodApp.defaultSupabaseAnon;
 
             try {
-                // 1. Supabase'den player_stats çek
-                const SUPABASE_URL = window.atommodApp?.defaultSupabaseUrl || sessionStorage.getItem('atommod_supabase_url');
-                const SUPABASE_ANON = window.atommodApp?.defaultSupabaseAnon || sessionStorage.getItem('atommod_supabase_anon');
+                const data = await window.supabaseUtils.fetchServerStatus(SUPABASE_URL, SUPABASE_ANON);
 
-                if (SUPABASE_URL && SUPABASE_ANON) {
-                    const data = await window.supabaseUtils.fetchPlayerStats(SUPABASE_URL, SUPABASE_ANON, 50);
+                document.getElementById('playerCount').textContent = data.length;
 
-                    countEl.textContent = data.length;
-                    statusEl.innerHTML = '✅ <span style="color:#0f0">Sunucu Açık</span>';
-
-                    if (data.length > 0) {
-                        playersEl.innerHTML = '<strong>Online Oyuncular:</strong><br>' +
-                            data.map(p => `• ${p.nickname} (${p.total_play_seconds || 0}s)`).join('<br>');
-                    } else {
-                        playersEl.textContent = 'Şu anda kimse online değil.';
-                    }
-                } else {
-                    // Fallback: Plugin'den çek
-                    const res = await fetch(baseUrl + '/status');
-                    const pdata = await res.json();
-                    countEl.textContent = pdata.count;
-                    statusEl.innerHTML = '✅ <span style="color:#0f0">Sunucu Açık</span>';
-                    playersEl.innerHTML = '<strong>Online:</strong><br>' + pdata.players.map(p => `• ${p}`).join('<br>');
+                // İlk kayıttan server bilgilerini al (hepsi aynı sunucuda ise)
+                if (data.length > 0) {
+                    document.getElementById('serverIp').textContent = data[0].server_ip || 'Bilinmiyor';
+                    document.getElementById('serverNumber').textContent = data[0].server_number || '1';
                 }
+
+                let html = '<strong>Online Oyuncular:</strong><br>';
+                data.forEach(p => {
+                    html += `
+                        <div style="margin:4px 0;">
+                            • ${p.nickname} 
+                            <button onclick="kick('${p.nickname}')" style="font-size:10px;">KICK</button>
+                            <button onclick="ban('${p.nickname}')" style="font-size:10px;color:red;">BAN</button>
+                        </div>`;
+                });
+                document.getElementById('players').innerHTML = html || 'Şu anda kimse online değil.';
+
             } catch (err) {
                 console.error(err);
-                statusEl.innerHTML = '❌ <span style="color:#f00">Sunucuya ulaşılamadı</span>';
-                countEl.textContent = '0';
-                playersEl.textContent = 'Bağlantı hatası.';
+                document.getElementById('players').textContent = 'Supabase bağlantı hatası.';
             }
         }
+
+        window.kick = async function(nickname) {
+            if (currentPermission < 500) return alert('Yetkiniz yetersiz!');
+            if (!confirm(`${nickname} kicklensin mi?`)) return;
+            const res = await window.supabaseUtils.kickPlayer(baseUrl, nickname, "Site üzerinden kick", localStorage.getItem('atommod_lastuser'));
+            alert(res.ok ? 'Kick gönderildi' : 'Hata');
+            loadStatus();
+        };
+
+        window.ban = async function(nickname) {
+            if (currentPermission < 1000) return alert('Yetkiniz yetersiz! (Ban için daha yüksek yetki gerekir)');
+            if (!confirm(`${nickname} banlansın mı?`)) return;
+            const res = await window.supabaseUtils.banPlayer(baseUrl, nickname, "Site üzerinden ban", localStorage.getItem('atommod_lastuser'));
+            alert(res.ok ? 'Ban gönderildi' : 'Hata');
+            loadStatus();
+        };
+
+        document.getElementById('sendCmdBtn').addEventListener('click', async () => {
+            const cmd = document.getElementById('commandInput').value.trim();
+            if (!cmd || currentPermission < 500) return alert('Yetkiniz yetersiz veya komut boş!');
+            const res = await window.supabaseUtils.sendCommand(baseUrl, cmd, localStorage.getItem('atommod_lastuser'));
+            alert(res.ok ? 'Komut gönderildi!' : 'Hata');
+        });
 
         document.getElementById('refresh').addEventListener('click', loadStatus);
         window.addEventListener('load', loadStatus);
