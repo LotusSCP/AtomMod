@@ -9,15 +9,30 @@
 <body>
     <main>
         <h1>Giriş Yap</h1>
+
         <form id="loginForm">
-            <label>Kullanıcı adı / E-posta:<br><input type="text" id="username" required></label>
-            <label>Şifre:<br><input type="password" id="password" required></label>
+            <label>Kullanıcı adı:<br>
+                <input type="text" id="username" required autocomplete="username">
+            </label>
+            
+            <label>Şifre:<br>
+                <input type="password" id="password" required autocomplete="current-password">
+            </label>
+
             <label><input type="checkbox" id="rememberMe"> Beni Hatırla</label>
-            <label><input type="checkbox" id="useSupabaseAuth" checked> Supabase Auth kullan</label>
+            
+            <!-- Supabase Auth seçeneğini geçici olarak devre dışı bıraktık çünkü backend login daha stabil -->
+            <!-- <label><input type="checkbox" id="useSupabaseAuth" checked> Supabase Auth kullan</label> -->
+
             <button type="submit" id="submitBtn">Giriş Yap</button>
         </form>
+
         <div id="result"></div>
-        <p><a href="index.html">Ana Sayfa</a> | <a href="register.html">Kayıt Ol</a></p>
+
+        <p>
+            <a href="index.html">Ana Sayfa</a> | 
+            <a href="register.html">Kayıt Ol</a>
+        </p>
     </main>
 
     <script src="supabase.js"></script>
@@ -28,51 +43,60 @@
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             const remember = document.getElementById('rememberMe').checked;
-            const useSupabase = document.getElementById('useSupabaseAuth').checked;
+            // const useSupabase = document.getElementById('useSupabaseAuth').checked; // şu an kullanılmıyor
+
             const resEl = document.getElementById('result');
             const btn = document.getElementById('submitBtn');
 
             btn.disabled = true;
-            resEl.textContent = 'Giriş yapılıyor...';
+            resEl.innerHTML = 'Giriş yapılıyor...';
 
             try {
-                if (useSupabase) {
-                    const result = await window.supabaseUtils.signIn(
-                        window.atommodApp.defaultSupabaseUrl,
-                        window.atommodApp.defaultSupabaseAnon,
-                        username, password
-                    );
+                // Şu anda Supabase Auth yerine backend login kullanıyoruz (daha stabil)
+                const res = await fetch(baseUrl + '/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
 
-                    if (result.ok) {
-                        resEl.textContent = '✅ Giriş başarılı!';
-                        if (remember) localStorage.setItem('atommod_lastuser', username);
-                        setTimeout(() => window.location.href = 'status.html', 800);
-                    } else {
-                        resEl.textContent = `❌ ${result.error?.message || 'Giriş başarısız'}`;
+                const data = await res.json();
+
+                if (res.ok) {
+                    resEl.innerHTML = '✅ <strong>Giriş başarılı!</strong>';
+
+                    // Giriş başarılı olduğunu kaydet (butonları gizlemek için)
+                    localStorage.setItem('atommod_logged_in', 'true');
+                    if (remember) {
+                        localStorage.setItem('atommod_lastuser', username);
                     }
-                } else {
-                    // Backend login
-                    const res = await fetch(baseUrl + '/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username, password })
-                    });
-                    const data = await res.json();
-                    if (res.ok) {
-                        resEl.textContent = '✅ Giriş başarılı!';
-                        if (remember) localStorage.setItem('atommod_lastuser', username);
-                        setTimeout(() => window.location.href = 'status.html', 800);
-                    } else {
-                        resEl.textContent = `❌ ${data.error || 'Geçersiz bilgi'}`;
-                    }
+
+                    // 800ms sonra ana sayfaya yönlendir
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 800);
+                } 
+                else {
+                    resEl.innerHTML = `❌ ${data.error || 'Geçersiz kullanıcı adı veya şifre'}`;
                 }
-            } catch (err) {
-                resEl.textContent = `❌ Hata: ${err.message}`;
-            } finally {
+            } 
+            catch (err) {
+                console.error(err);
+                resEl.innerHTML = `❌ Bağlantı hatası: ${err.message}`;
+            } 
+            finally {
                 btn.disabled = false;
+            }
+        });
+
+        // Sayfa yüklendiğinde son kullanılan kullanıcı adını doldur
+        window.addEventListener('load', () => {
+            const lastUser = localStorage.getItem('atommod_lastuser');
+            if (lastUser) {
+                document.getElementById('username').value = lastUser;
             }
         });
     </script>
