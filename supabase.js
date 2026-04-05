@@ -1,4 +1,4 @@
-// supabase.js - AtomMod Supabase + Web API
+// supabase.js - AtomMod Supabase + Web API (Güncel)
 
 window.supabaseUtils = {
 
@@ -36,7 +36,7 @@ window.supabaseUtils = {
             if (!response.ok) {
                 const errorMsg = data?.message || data?.error || data?.details || 'Kayıt başarısız';
                 console.error('Supabase SignUp Error:', errorMsg);
-                return { ok: false, error: { message: errorMsg }, data: data };
+                return { ok: false, error: { message: errorMsg } };
             }
 
             return {
@@ -90,7 +90,7 @@ window.supabaseUtils = {
 };
 
 // ========================
-// YENİ: SUNUCU KOMUT GÖNDERME (kontrol.html için)
+// SUNUCU KOMUT GÖNDERME (kontrol.html için)
 // ========================
 async function sendServerCommand(command, args = '') {
     const baseUrl = window.atommodApp?.baseUrl || 'https://atommod.mcsunucun.com:29075';
@@ -98,12 +98,10 @@ async function sendServerCommand(command, args = '') {
     try {
         const res = await fetch(`${baseUrl}/api/command`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                command: command,
-                args: args || ''
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                command: command, 
+                args: args || '' 
             })
         });
 
@@ -123,7 +121,7 @@ async function sendServerCommand(command, args = '') {
     }
 }
 
-// Global olarak erişilebilir yap
+// Global erişim
 window.sendServerCommand = sendServerCommand;
 
 console.log('✅ supabase.js yüklendi - signUp + sendServerCommand hazır.');
