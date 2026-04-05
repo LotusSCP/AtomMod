@@ -56,6 +56,38 @@ window.supabaseUtils = {
             };
         }
     },
+    // supabase.js dosyasında bu fonksiyonu güncelle veya ekle
+async function sendServerCommand(command, args = '') {
+    // Web panelinle aynı adresi kullanıyoruz (port dahil)
+    const apiBase = 'https://atommod.mcsunucun.com:29075';
+
+    try {
+        const res = await fetch(`${apiBase}/api/command`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                command: command,
+                args: args || ''
+            })
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text().catch(() => 'Bilinmeyen hata');
+            throw new Error(errorText);
+        }
+
+        const text = await res.text();
+        return { ok: true, message: text || 'Komut başarıyla gönderildi.' };
+    } catch (err) {
+        console.error('Command error:', err);
+        return { 
+            ok: false, 
+            message: 'Sunucuya ulaşılamadı. Lütfen daha sonra tekrar deneyin.<br>Hata: ' + err.message 
+        };
+    }
+}
 
     // ========================
     // SUNUCU DURUMU (Supabase'den)
