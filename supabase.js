@@ -16,7 +16,7 @@ window.supabaseUtils = {
               , anonkey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzeW9zZmd0aXB3ampnZGFjY3N0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNDYyNzEsImV4cCI6MjA4NTYyMjI3MX0.px9iLocZJeke1AAIOwV1YLqZmW_5yJIXKoZHcfmQVeA"
 
 
-        const url = supabaseUrl.replace(/\/$/, '') + '/auth/v1/signup';
+        // const url = supabaseUrl.replace(/\/$/, '') + '/auth/v1/signup';
 
         const url = supabaseUrl.replace(/\/$/, '') + '/rest/v1/accounts';
 
