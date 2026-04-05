@@ -8,7 +8,6 @@
     <style>
         .nav-link { margin: 0 12px; text-decoration: none; }
         .logged-in { color: #0f0; font-weight: bold; }
-        .not-logged { color: #ffcc00; }
     </style>
 </head>
 <body>
@@ -26,10 +25,10 @@
     <main>
         <section>
             <h2 id="welcomeHeading">Hoş geldiniz</h2>
-            <p id="welcomeText">AtomMod web paneline hoş geldiniz. Supabase ile bağlantı aktif.</p>
+            <p id="welcomeText">AtomMod web paneline hoş geldiniz.</p>
             
             <div id="loginStatus" style="display: none; margin: 15px 0; padding: 10px; border-radius: 6px;">
-                <!-- Dinamik olarak doldurulacak -->
+                <!-- Dinamik doldurulacak -->
             </div>
         </section>
 
@@ -37,19 +36,8 @@
             <h3>Kullanım</h3>
             <ul>
                 <li>Supabase üzerinden kayıt ve giriş yapabilirsiniz.</li>
-                <li>Plugin tarafında Supabase entegrasyonu aktif olmalı.</li>
+                <li>Sunucu durumu ve oyuncu istatistikleri Supabase ile senkronize çalışır.</li>
             </ul>
-        </section>
-
-        <section>
-            <h3>Supabase Ayarları (Opsiyonel - Bu Oturum İçin)</h3>
-            <label>Supabase URL:<br>
-                <input id="sbUrl" style="width:100%" value="https://kdvvvldbetjthldhodab.supabase.co">
-            </label>
-            <label>Anon Key:<br>
-                <input id="sbKey" style="width:100%" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkdnZ2bGRiZXRqdGhsZGhvZGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNjA3NDIsImV4cCI6MjA5MDYzNjc0Mn0.o0WFi9ZYYGkInwFccMruvGYShAO_tQUpMKh_FqLgqBA">
-            </label>
-            <button id="saveSb">Ayarları Kaydet</button>
         </section>
     </main>
 
@@ -57,67 +45,40 @@
     <script src="app.js"></script>
 
     <script>
-        // ========================
-        // Giriş durumunu kontrol et (Supabase + localStorage)
-        // ========================
         function updateLoginUI() {
             const isLoggedIn = localStorage.getItem('atommod_logged_in') === 'true';
-            const username = localStorage.getItem('atommod_lastuser') || 'Kullanıcı';
+            const username = localStorage.getItem('atommod_lastuser') || '';
 
             const loginLink = document.getElementById('loginLink');
             const registerLink = document.getElementById('registerLink');
             const logoutLink = document.getElementById('logoutLink');
             const loginStatus = document.getElementById('loginStatus');
-            const welcomeText = document.getElementById('welcomeText');
             const welcomeHeading = document.getElementById('welcomeHeading');
+            const welcomeText = document.getElementById('welcomeText');
 
             if (isLoggedIn) {
                 loginLink.style.display = 'none';
                 registerLink.style.display = 'none';
                 logoutLink.style.display = 'inline';
 
-                welcomeHeading.textContent = `Hoş geldiniz, ${username}`;
-                welcomeText.textContent = 'Supabase üzerinden başarılı bir şekilde giriş yaptınız.';
+                welcomeHeading.textContent = username ? `Hoş geldiniz, ${username}` : 'Hoş geldiniz';
+                welcomeText.textContent = 'Supabase ile bağlantınız aktif.';
 
                 loginStatus.style.display = 'block';
                 loginStatus.className = 'logged-in';
-                loginStatus.innerHTML = `✅ Giriş yaptınız → <strong>${username}</strong>`;
+                loginStatus.innerHTML = `✅ Giriş yaptınız → <strong>${username || 'Kullanıcı'}</strong>`;
             } else {
                 loginLink.style.display = 'inline';
                 registerLink.style.display = 'inline';
                 logoutLink.style.display = 'none';
-
                 loginStatus.style.display = 'none';
+
                 welcomeHeading.textContent = 'Hoş geldiniz';
-                welcomeText.textContent = 'AtomMod web paneline hoş geldiniz. Supabase ile bağlantı aktif.';
+                welcomeText.textContent = 'AtomMod web paneline hoş geldiniz.';
             }
         }
 
-        // ========================
-        // Supabase ayarlarını kaydet
-        // ========================
-        document.getElementById('saveSb').addEventListener('click', () => {
-            const url = document.getElementById('sbUrl').value.trim();
-            const key = document.getElementById('sbKey').value.trim();
-
-            if (!url || !key) {
-                alert('Supabase URL ve Anon Key alanlarını doldurun.');
-                return;
-            }
-
-            if (window.atommodApp && window.atommodApp.setSupabaseConfig) {
-                window.atommodApp.setSupabaseConfig(url, key);
-            } else {
-                sessionStorage.setItem('atommod_supabase_url', url);
-                sessionStorage.setItem('atommod_supabase_anon', key);
-            }
-
-            alert('✅ Supabase ayarları bu oturum için kaydedildi.');
-        });
-
-        // ========================
         // Çıkış Yap
-        // ========================
         document.getElementById('logoutLink').addEventListener('click', (e) => {
             e.preventDefault();
             if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
@@ -127,12 +88,10 @@
             }
         });
 
-        // ========================
         // Sayfa yüklendiğinde
-        // ========================
         window.addEventListener('load', () => {
             updateLoginUI();
-            console.log('✅ AtomMod Ana Sayfa (Supabase versiyonu) yüklendi.');
+            console.log('✅ AtomMod Ana Sayfa yüklendi.');
         });
     </script>
 </body>
