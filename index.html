@@ -1,60 +1,142 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>AtomMod - Ana Sayfa</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AtomMod - Ana Sayfa</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .nav-link {
+            margin: 0 10px;
+            text-decoration: none;
+        }
+        .logged-in-info {
+            color: #0f0;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>AtomMod - Kontrol Paneli</h1>
-    <nav>
-      <a href="status.html">Sunucu Durumu</a>
-      <a href="login.html">Giriş</a>
-      <a href="register.html">Kayıt</a>
-    </nav>
-  </header>
+    <header>
+        <h1>AtomMod - Kontrol Paneli</h1>
+        
+        <nav id="mainNav">
+            <a href="status.html" class="nav-link">Sunucu Durumu</a>
+            <a href="login.html" id="loginLink" class="nav-link">Giriş Yap</a>
+            <a href="register.html" id="registerLink" class="nav-link">Kayıt Ol</a>
+        </nav>
+    </header>
 
-  <main>
-    <section>
-      <h2>Hoş geldiniz</h2>
-      <p>Bu statik HTML projesi örneği plugin'inize (/status, /login, /register) bağlanmak için hazırlanmıştır. Plugin'iniz localhost:5001 üzerinde çalışıyorsa doğrudan bağlantı sağlanır.</p>
-    </section>
+    <main>
+        <section>
+            <h2>Hoş geldiniz</h2>
+            <p id="welcomeText">Bu statik HTML projesi, AtomMod plugin'iniz ile iletişim kurmak için hazırlanmıştır.</p>
+            
+            <div id="loginStatus" class="logged-in-info" style="display: none;">
+                ✅ Giriş yaptınız. Hoş geldiniz!
+            </div>
+        </section>
 
-    <section>
-      <h3>Kullanım</h3>
-      <ul>
-        <li>Basit test: bu klasörde bir statik sunucu çalıştırın (ör. `npx http-server` veya VS Code Live Server) ve tarayıcıdan açın.</li>
-        <li>Veya <code>index.html</code>'i doğrudan açabilirsiniz (CORS kısıtları nedeniyle bazı fonksiyonlar sınırlı olabilir).</li>
-      </ul>
-    </section>
+        <section>
+            <h3>Kullanım</h3>
+            <ul>
+                <li>Bu klasörü bir statik sunucu ile çalıştırın (örneğin: <code>npx http-server</code> veya VS Code Live Server).</li>
+                <li>Plugin'iniz <code>http://localhost:5001</code> adresinde çalışıyor olmalı.</li>
+            </ul>
+        </section>
 
-    <section>
-      <h3>Supabase ayarları (opsiyonel)</h3>
-      <p>Buraya Supabase URL ve anon key girip geçici olarak tarayıcı oturumuna kaydedebilirsiniz (sadece read için anon key kullanın).</p>
-      <label>Supabase URL:<br><input id="sbUrl" style="width:100%"></label>
-      <label>Anon Key:<br><input id="sbKey" style="width:100%"></label>
-      <button id="saveSb">Kaydet</button>
-    </section>
-  </main>
+        <section>
+            <h3>Supabase Ayarları (Opsiyonel)</h3>
+            <p>Buraya Supabase URL ve Anon Key girerek geçici ayarları tarayıcıda saklayabilirsiniz.</p>
+            
+            <label>Supabase URL:<br>
+                <input id="sbUrl" style="width:100%" placeholder="https://your-project.supabase.co">
+            </label>
+            
+            <label>Anon Key:<br>
+                <input id="sbKey" style="width:100%" placeholder="eyJhbGciOi...">
+            </label>
+            
+            <button id="saveSb">Ayarları Kaydet (Session)</button>
+        </section>
+    </main>
 
-  <script src="supabase.js"></script>
-  <script src="app.js"></script>
-  <script>
-    document.getElementById('saveSb').addEventListener('click', function () {
-      var url = document.getElementById('sbUrl').value.trim();
-      var key = document.getElementById('sbKey').value.trim();
-      if (!url || !key) return alert('Lütfen her iki alanı doldurun');
-      if (window.atommodApp && window.atommodApp.setSupabaseConfig) {
-        window.atommodApp.setSupabaseConfig(url, key);
-        alert('Kaydedildi (sessionStorage)');
-      } else {
-        sessionStorage.setItem('atommod_supabase_url', url);
-        sessionStorage.setItem('atommod_supabase_anon', key);
-        alert('Kaydedildi (sessionStorage)');
-      }
-    });
-  </script>
+    <script src="supabase.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+        // ========================
+        // Giriş durumunu kontrol et ve butonları yönet
+        // ========================
+        function updateLoginUI() {
+            const isLoggedIn = localStorage.getItem('atommod_logged_in') === 'true';
+            const username = localStorage.getItem('atommod_lastuser');
+
+            const loginLink = document.getElementById('loginLink');
+            const registerLink = document.getElementById('registerLink');
+            const loginStatus = document.getElementById('loginStatus');
+            const welcomeText = document.getElementById('welcomeText');
+
+            if (isLoggedIn) {
+                // Giriş yapıldıysa login ve register butonlarını gizle
+                if (loginLink) loginLink.style.display = 'none';
+                if (registerLink) registerLink.style.display = 'none';
+
+                // Hoş geldiniz mesajını güncelle
+                if (username) {
+                    welcomeText.innerHTML = `Hoş geldiniz, <strong>${username}</strong>!`;
+                }
+                loginStatus.style.display = 'block';
+                loginStatus.textContent = `✅ Giriş yaptınız (${username || 'Kullanıcı'})`;
+            } else {
+                // Giriş yapılmadıysa butonları göster
+                if (loginLink) loginLink.style.display = 'inline';
+                if (registerLink) registerLink.style.display = 'inline';
+                loginStatus.style.display = 'none';
+            }
+        }
+
+        // ========================
+        // Supabase ayarlarını kaydet
+        // ========================
+        document.getElementById('saveSb').addEventListener('click', function () {
+            const url = document.getElementById('sbUrl').value.trim();
+            const key = document.getElementById('sbKey').value.trim();
+
+            if (!url || !key) {
+                alert('Lütfen Supabase URL ve Anon Key alanlarını doldurun.');
+                return;
+            }
+
+            if (window.atommodApp && window.atommodApp.setSupabaseConfig) {
+                window.atommodApp.setSupabaseConfig(url, key);
+            } else {
+                sessionStorage.setItem('atommod_supabase_url', url);
+                sessionStorage.setItem('atommod_supabase_anon', key);
+            }
+
+            alert('✅ Supabase ayarları kaydedildi (bu oturum için geçerli).');
+        });
+
+        // ========================
+        // Sayfa yüklendiğinde çalıştır
+        // ========================
+        window.addEventListener('load', () => {
+            updateLoginUI();
+
+            // Çıkış yap butonu istersen buraya eklenebilir
+            console.log('✅ AtomMod Ana Sayfa yüklendi.');
+        });
+
+        // Opsiyonel: Çıkış yapma fonksiyonu (ileride kullanmak istersen)
+        window.logout = function() {
+            if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
+                localStorage.removeItem('atommod_logged_in');
+                localStorage.removeItem('atommod_lastuser');
+                window.location.reload();
+            }
+        };
+    </script>
 </body>
 </html>
