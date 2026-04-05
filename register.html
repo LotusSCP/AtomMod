@@ -34,12 +34,12 @@
             resEl.innerHTML = 'Kayıt yapılıyor...';
 
             try {
-                const result = await window.supabaseUtils.signUp(
-                    window.atommodApp.defaultSupabaseUrl,
-                    window.atommodApp.defaultSupabaseAnon,
-                    username,
-                    password
-                );
+const result = await window.supabaseUtils.signUp(
+    window.atommodApp.defaultSupabaseUrl,
+    window.atommodApp.defaultSupabaseAnon,
+    username,
+    password
+);
 
                 if (result && result.ok === true) {
                     resEl.innerHTML = `✅ <b>Kayıt başarılı!</b><br>Hesap: ${username}<br>Şimdi giriş yapabilirsiniz.`;
