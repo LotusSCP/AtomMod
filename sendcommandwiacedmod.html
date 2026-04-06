@@ -3,85 +3,152 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>AtomMod - Sunucu Kontrol (CedMod)</title>
+    <title>AtomMod - CedMod Komut Paneli</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        .admin-panel { background: #111; border: 2px solid #0f0; border-radius: 10px; padding: 25px; margin: 20px 0; }
-        .result { margin-top: 15px; padding: 12px; border-radius: 6px; min-height: 60px; font-weight: bold; }
-        select, input { width: 100%; padding: 10px; margin: 8px 0; background: #222; color: white; border: 1px solid #444; }
-        button { padding: 12px 25px; font-size: 16px; background: #0f0; color: black; border: none; border-radius: 6px; cursor: pointer; }
-        button:hover { background: #0c0; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid #0f0;
+        }
+        h1 {
+            text-align: center;
+            color: #0f0;
+        }
+        label {
+            display: block;
+            margin: 15px 0 5px;
+            font-weight: bold;
+        }
+        select, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            background: #222;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        button {
+            margin-top: 20px;
+            width: 100%;
+            padding: 14px;
+            font-size: 18px;
+            background: #0f0;
+            color: black;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #0c0;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            min-height: 80px;
+            font-weight: bold;
+            white-space: pre-wrap;
+        }
+        .success { background: #004d00; color: #0f0; }
+        .error   { background: #4d0000; color: #ff6666; }
     </style>
 </head>
 <body>
-    <main>
-        <h1>🛠 Sunucu Kontrol (CedMod Modu)</h1>
-        <p id="permissionInfo" style="color: lime; font-weight: bold;"></p>
+    <div class="container">
+        <h1>🛠 CedMod Komut Paneli</h1>
+        <p id="permissionInfo" style="text-align:center; font-size:18px;"></p>
 
-        <div class="admin-panel">
-            <label>Komut Türü:<br>
-                <select id="commandSelect">
-                    <option value="broadcast">Broadcast</option>
-                    <option value="bc">Kısa Broadcast</option>
-                    <option value="roundrestart">Round Restart</option>
-                    <option value="cassie">Cassie</option>
-                    <option value="nuke">Nuke Başlat</option>
-                    <option value="stopnuke">Nuke Durdur</option>
-                    <option value="kick">Kick Oyuncu</option>
-                </select>
-            </label>
+        <label>Komut Türü:</label>
+        <select id="commandSelect">
+            <option value="broadcast">Broadcast Mesajı</option>
+            <option value="bc">Kısa Broadcast (bc)</option>
+            <option value="roundrestart">Round Restart</option>
+            <option value="cassie">Cassie Mesajı</option>
+            <option value="nuke">Nuke Başlat</option>
+            <option value="stopnuke">Nuke Durdur</option>
+            <option value="kick">Oyuncu Kick</option>
+            <option value="ban">Oyuncu Ban</option>
+            <option value="mute">Oyuncu Mute</option>
+        </select>
 
-            <label>Argümanlar:<br>
-                <input type="text" id="commandArgs" placeholder="Örn: Hoş geldiniz! veya oyuncu adı">
-            </label>
+        <label>Argümanlar / Mesaj:</label>
+        <input type="text" id="commandArgs" placeholder="Örn: Sunucuya hoş geldiniz! veya oyuncu adı sebep">
 
-            <button id="sendCommandBtn">🚀 Komutu Gönder (CedMod)</button>
-            
-            <div id="commandResult" class="result"></div>
-        </div>
+        <button id="sendCommandBtn">🚀 Komutu CedMod ile Gönder</button>
+        
+        <div id="commandResult" class="result"></div>
 
-        <p><a href="index.html">← Ana Sayfa</a></p>
-    </main>
+        <p style="text-align:center; margin-top:30px;">
+            <a href="index.html" style="color:#0f0;">← Ana Sayfa</a> | 
+            <a href="status.html" style="color:#0f0;">Sunucu Durumu</a>
+        </p>
+    </div>
 
     <script src="supabase.js"></script>
     <script src="app.js"></script>
 
     <script>
+        // Permission Kontrolü (Supabase'ten)
         async function getCurrentUserPermission() {
-            // Basit local kontrol (gerçek Supabase kontrolü için supabase.js'deki getUserPermission kullanılabilir)
-            return Number(sessionStorage.getItem('atommod_permission') || localStorage.getItem('atommod_permission') || 0);
+            try {
+                return await window.supabaseUtils.getUserPermission(
+                    window.atommodApp.defaultSupabaseUrl,
+                    window.atommodApp.defaultSupabaseAnon
+                );
+            } catch (e) {
+                return Number(sessionStorage.getItem('atommod_permission') || 0);
+            }
         }
 
         window.addEventListener('load', async () => {
             const permission = await getCurrentUserPermission();
             const infoEl = document.getElementById('permissionInfo');
+            const resultEl = document.getElementById('commandResult');
 
             if (permission >= 5) {
-                infoEl.textContent = `✅ Yetkiniz: ${permission} (CedMod komutları aktif)`;
+                infoEl.innerHTML = `✅ Giriş başarılı • Yetki: <strong>${permission}</strong> (CedMod komutları aktif)`;
             } else {
                 infoEl.style.color = 'red';
-                infoEl.textContent = `❌ Yetkiniz yetersiz (${permission}). Bu sayfayı kullanamazsınız.`;
+                infoEl.innerHTML = `❌ Yetkiniz yetersiz (${permission}). Bu sayfayı kullanamazsınız.`;
                 document.getElementById('sendCommandBtn').disabled = true;
                 return;
             }
 
+            // Komut Gönderme Butonu
             document.getElementById('sendCommandBtn').addEventListener('click', async () => {
                 const cmd = document.getElementById('commandSelect').value;
                 const args = document.getElementById('commandArgs').value.trim();
                 const resultEl = document.getElementById('commandResult');
 
-                resultEl.style.color = '#ff0';
+                resultEl.className = 'result';
                 resultEl.innerHTML = '⏳ Komut CedMod üzerinden gönderiliyor...';
 
-                // CedMod uyumlu basit komut gönderme (şu an mevcut API'n üzerinden)
-                const res = await window.sendServerCommand(cmd, args);
+                try {
+                    const res = await window.sendServerCommand(cmd, args);
 
-                if (res.ok) {
-                    resultEl.style.color = 'lime';
-                    resultEl.innerHTML = `✅ ${res.message}`;
-                } else {
-                    resultEl.style.color = 'red';
-                    resultEl.innerHTML = `❌ ${res.message}<br><small>CedMod yüklü olduğu halde çalışmıyorsa sunucuyu restart edin.</small>`;
+                    if (res.ok) {
+                        resultEl.className = 'result success';
+                        resultEl.innerHTML = `✅ Komut başarıyla gönderildi!\n\n${res.message}`;
+                    } else {
+                        resultEl.className = 'result error';
+                        resultEl.innerHTML = `❌ ${res.message}`;
+                    }
+                } catch (err) {
+                    resultEl.className = 'result error';
+                    resultEl.innerHTML = `❌ Beklenmeyen hata: ${err.message}`;
                 }
             });
         });
