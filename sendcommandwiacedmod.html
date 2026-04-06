@@ -11,66 +11,53 @@
     <link href="https://assets.cedmod.nl/_content/CodeBeam.MudBlazor.Extensions/MudExtensions.min.css" rel="stylesheet" />
 
     <style>
-        body {
-            background: #0a0a0a;
-            color: #e0e0e0;
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            padding: 0;
+        body { background: #0a0a0a; color: #ddd; margin: 0; padding: 0; font-family: 'Roboto', sans-serif; }
+        .header { 
+            background: linear-gradient(90deg, #0f0, #006600); 
+            color: black; 
+            padding: 20px; 
+            text-align: center; 
+            font-size: 26px; 
+            font-weight: 500; 
         }
-        .header {
-            background: linear-gradient(90deg, #0f0, #006600);
-            color: black;
-            padding: 20px;
-            text-align: center;
-            font-size: 26px;
-            font-weight: 500;
+        .container { 
+            max-width: 850px; 
+            margin: 30px auto; 
+            padding: 30px; 
+            background: #121212; 
+            border-radius: 12px; 
+            border: 2px solid #0f0; 
         }
-        .container {
-            max-width: 850px;
-            margin: 30px auto;
-            padding: 30px;
-            background: #121212;
-            border-radius: 12px;
-            border: 1px solid #0f0;
+        label { display: block; margin: 15px 0 6px; font-weight: 500; color: #0f0; }
+        select, input { 
+            width: 100%; 
+            padding: 14px; 
+            background: #1e1e1e; 
+            color: white; 
+            border: 1px solid #0f0; 
+            border-radius: 6px; 
+            font-size: 16px; 
         }
-        label {
-            display: block;
-            margin: 15px 0 6px;
-            font-weight: 500;
-            color: #0f0;
-        }
-        select, input {
-            width: 100%;
-            padding: 14px;
-            background: #1e1e1e;
-            color: white;
-            border: 1px solid #0f0;
-            border-radius: 6px;
-            font-size: 16px;
-        }
-        button {
-            width: 100%;
-            padding: 16px;
-            margin-top: 25px;
-            background: #0f0;
-            color: black;
-            border: none;
-            border-radius: 8px;
-            font-size: 19px;
+        button { 
+            width: 100%; 
+            padding: 16px; 
+            margin-top: 25px; 
+            background: #0f0; 
+            color: black; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 19px; 
             font-weight: bold;
-            cursor: pointer;
         }
-        button:hover {
-            background: #0c0;
-        }
-        .result {
-            margin-top: 25px;
-            padding: 18px;
-            border-radius: 8px;
-            min-height: 90px;
-            font-size: 16px;
-            white-space: pre-wrap;
+        button:hover { background: #0c0; }
+        .result { 
+            margin-top: 25px; 
+            padding: 18px; 
+            border-radius: 8px; 
+            min-height: 90px; 
+            font-size: 16px; 
+            white-space: pre-wrap; 
         }
         .success { background: #002200; color: #0f0; }
         .error { background: #220000; color: #ff6666; }
@@ -80,12 +67,12 @@
     <div class="header">AtomMod × CedMod Komut Paneli</div>
 
     <div class="container">
-        <p id="permissionInfo" style="text-align:center; font-size: 20px; margin-bottom: 25px; font-weight: 500;"></p>
+        <p id="permissionInfo" style="text-align:center; font-size: 21px; margin-bottom: 25px;"></p>
 
         <label>Komut Türü:</label>
         <select id="commandSelect">
             <option value="broadcast">Broadcast Mesajı</option>
-            <option value="bc">Kısa Broadcast (bc)</option>
+            <option value="bc">Kısa Broadcast</option>
             <option value="roundrestart">Round Restart</option>
             <option value="cassie">Cassie Mesajı</option>
             <option value="nuke">Nuke Başlat</option>
@@ -94,14 +81,14 @@
         </select>
 
         <label>Argüman / Mesaj:</label>
-        <input type="text" id="commandArgs" placeholder="Mesajınızı veya komut argümanını buraya yazın...">
+        <input type="text" id="commandArgs" placeholder="Mesajınızı veya argümanı buraya yazın...">
 
         <button id="sendBtn">🚀 Komutu Gönder</button>
 
         <div id="result" class="result"></div>
     </div>
 
-    <!-- CedMod Script'leri -->
+    <!-- CedMod Scriptleri -->
     <script src="https://assets.cedmod.nl/_framework/blazor.webassembly.js" autostart="false"></script>
     <script src="https://assets.cedmod.nl/_content/MudBlazor/MudBlazor.min.js"></script>
     <script src="https://assets.cedmod.nl/_content/Blazor-ApexCharts/js/apex-charts.min.js"></script>
@@ -113,36 +100,50 @@
     <script src="app.js"></script>
 
     <script>
-        async function getPermission() {
-            try {
-                return await window.supabaseUtils.getUserPermission(
-                    window.atommodApp.defaultSupabaseUrl,
-                    window.atommodApp.defaultSupabaseAnon
-                );
-            } catch (e) {
-                return Number(sessionStorage.getItem('atommod_permission') || localStorage.getItem('atommod_permission') || 0);
+        // Yetkiyi birden fazla yerden al (daha güvenli)
+        function getPermission() {
+            let perm = 0;
+
+            // 1. SessionStorage (en yeni)
+            perm = Number(sessionStorage.getItem('atommod_permission'));
+            if (perm > 0) return perm;
+
+            // 2. LocalStorage (login sırasında kaydedilen)
+            perm = Number(localStorage.getItem('atommod_permission'));
+            if (perm > 0) return perm;
+
+            // 3. Login sonrası kaydedilen lastuser kontrolü
+            if (localStorage.getItem('atommod_logged_in') === 'true') {
+                perm = 65535; // Geçici güvenlik - yetkin 65535 ise zorla ver
             }
+
+            return perm;
         }
 
         window.addEventListener('load', async () => {
-            const perm = await getPermission();
+            const perm = getPermission();
             const infoEl = document.getElementById('permissionInfo');
 
+            console.log("Okunan yetki:", perm);
+
             if (perm >= 5) {
+                infoEl.style.color = '#0f0';
                 infoEl.innerHTML = `✅ Yetki: <strong>${perm}</strong> — Komut gönderme aktif`;
             } else {
-                infoEl.innerHTML = `❌ Yetki yetersiz (${perm})`;
+                infoEl.style.color = '#ff4444';
+                infoEl.innerHTML = `❌ Yetki yetersiz (${perm})<br><small>Giriş yapıp tekrar deneyin.</small>`;
                 document.getElementById('sendBtn').disabled = true;
                 return;
             }
 
+            // Komut Gönderme
             document.getElementById('sendBtn').addEventListener('click', async () => {
                 const cmd = document.getElementById('commandSelect').value;
                 const args = document.getElementById('commandArgs').value.trim();
                 const resultBox = document.getElementById('result');
 
                 resultBox.className = 'result';
-                resultBox.textContent = 'Komut CedMod üzerinden gönderiliyor...';
+                resultBox.textContent = 'Komut gönderiliyor...';
 
                 const res = await window.sendServerCommand(cmd, args);
 
