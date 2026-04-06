@@ -25,7 +25,7 @@ function currentPermission() {
     return Number(sessionStorage.getItem('atommod_permission') || 0);
 }
 
-const baseUrl = 'http://localhost:5001';
+const baseUrl = 'http://atommod.mcsunucun.com:29075';
 
 // ========================
 // KENDİ SUPABASE BİLGİLERİNİ BURAYA YAZ
