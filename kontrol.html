@@ -48,23 +48,46 @@
 
     <script>
         async function getCurrentUserPermission() {
-            const token = sessionStorage.getItem('supabase_access_token');
-            if (!token) return 0;
+    return await window.supabaseUtils.getUserPermission(
+        window.atommodApp.defaultSupabaseUrl,
+        window.atommodApp.defaultSupabaseAnon
+    );
+}
 
-            const SUPABASE_URL = window.atommodApp?.defaultSupabaseUrl;
-            const SUPABASE_ANON = window.atommodApp?.defaultSupabaseAnon;
+window.addEventListener('load', async () => {
+    const permission = await getCurrentUserPermission();
+    const infoEl = document.getElementById('permissionInfo');
 
-            if (!SUPABASE_URL || !SUPABASE_ANON) return 0;
+    if (permission >= 5) {
+        infoEl.style.color = 'lime';
+        infoEl.textContent = `✅ Yetkiniz: ${permission} (Uzaktan kontrol aktif)`;
+    } else {
+        infoEl.style.color = 'red';
+        infoEl.textContent = `❌ Yetkiniz yetersiz (${permission}). Bu sayfayı kullanamazsınız.`;
+        document.getElementById('sendCommandBtn').disabled = true;
+        return;
+    }
 
-            const url = SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/accounts?select=permission&limit=1';
+    // Komut gönderme
+    document.getElementById('sendCommandBtn').addEventListener('click', async () => {
+        const cmd = document.getElementById('commandSelect').value;
+        const args = document.getElementById('commandArgs').value.trim();
+        const resultEl = document.getElementById('commandResult');
 
-            try {
-                const response = await fetch(url, {
-                    headers: {
-                        'apikey': SUPABASE_ANON,
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+        resultEl.style.color = '#ff0';
+        resultEl.innerHTML = '⏳ Komut gönderiliyor...';
+
+        const res = await window.sendServerCommand(cmd, args);
+
+        if (res.ok) {
+            resultEl.style.color = 'lime';
+            resultEl.innerHTML = `✅ ${res.message}`;
+        } else {
+            resultEl.style.color = 'red';
+            resultEl.innerHTML = `❌ ${res.message}`;
+        }
+    });
+});
 
                 if (!response.ok) return 0;
                 const data = await response.json();
