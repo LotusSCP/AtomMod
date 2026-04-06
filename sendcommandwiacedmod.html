@@ -1,1 +1,90 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AtomMod - Sunucu Kontrol (CedMod)</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .admin-panel { background: #111; border: 2px solid #0f0; border-radius: 10px; padding: 25px; margin: 20px 0; }
+        .result { margin-top: 15px; padding: 12px; border-radius: 6px; min-height: 60px; font-weight: bold; }
+        select, input { width: 100%; padding: 10px; margin: 8px 0; background: #222; color: white; border: 1px solid #444; }
+        button { padding: 12px 25px; font-size: 16px; background: #0f0; color: black; border: none; border-radius: 6px; cursor: pointer; }
+        button:hover { background: #0c0; }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>🛠 Sunucu Kontrol (CedMod Modu)</h1>
+        <p id="permissionInfo" style="color: lime; font-weight: bold;"></p>
 
+        <div class="admin-panel">
+            <label>Komut Türü:<br>
+                <select id="commandSelect">
+                    <option value="broadcast">Broadcast</option>
+                    <option value="bc">Kısa Broadcast</option>
+                    <option value="roundrestart">Round Restart</option>
+                    <option value="cassie">Cassie</option>
+                    <option value="nuke">Nuke Başlat</option>
+                    <option value="stopnuke">Nuke Durdur</option>
+                    <option value="kick">Kick Oyuncu</option>
+                </select>
+            </label>
+
+            <label>Argümanlar:<br>
+                <input type="text" id="commandArgs" placeholder="Örn: Hoş geldiniz! veya oyuncu adı">
+            </label>
+
+            <button id="sendCommandBtn">🚀 Komutu Gönder (CedMod)</button>
+            
+            <div id="commandResult" class="result"></div>
+        </div>
+
+        <p><a href="index.html">← Ana Sayfa</a></p>
+    </main>
+
+    <script src="supabase.js"></script>
+    <script src="app.js"></script>
+
+    <script>
+        async function getCurrentUserPermission() {
+            // Basit local kontrol (gerçek Supabase kontrolü için supabase.js'deki getUserPermission kullanılabilir)
+            return Number(sessionStorage.getItem('atommod_permission') || localStorage.getItem('atommod_permission') || 0);
+        }
+
+        window.addEventListener('load', async () => {
+            const permission = await getCurrentUserPermission();
+            const infoEl = document.getElementById('permissionInfo');
+
+            if (permission >= 5) {
+                infoEl.textContent = `✅ Yetkiniz: ${permission} (CedMod komutları aktif)`;
+            } else {
+                infoEl.style.color = 'red';
+                infoEl.textContent = `❌ Yetkiniz yetersiz (${permission}). Bu sayfayı kullanamazsınız.`;
+                document.getElementById('sendCommandBtn').disabled = true;
+                return;
+            }
+
+            document.getElementById('sendCommandBtn').addEventListener('click', async () => {
+                const cmd = document.getElementById('commandSelect').value;
+                const args = document.getElementById('commandArgs').value.trim();
+                const resultEl = document.getElementById('commandResult');
+
+                resultEl.style.color = '#ff0';
+                resultEl.innerHTML = '⏳ Komut CedMod üzerinden gönderiliyor...';
+
+                // CedMod uyumlu basit komut gönderme (şu an mevcut API'n üzerinden)
+                const res = await window.sendServerCommand(cmd, args);
+
+                if (res.ok) {
+                    resultEl.style.color = 'lime';
+                    resultEl.innerHTML = `✅ ${res.message}`;
+                } else {
+                    resultEl.style.color = 'red';
+                    resultEl.innerHTML = `❌ ${res.message}<br><small>CedMod yüklü olduğu halde çalışmıyorsa sunucuyu restart edin.</small>`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
