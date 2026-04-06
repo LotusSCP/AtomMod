@@ -3,8 +3,8 @@
 window.supabaseUtils = {
 
     // ========================
-    // KAYIT OL
-    // ========================
+// KAYIT OL (Service Role ile - Güvenli)
+ // ========================
 async signUp(supabaseUrl, anonKey, username, password) {
     if (!supabaseUrl || !anonKey || !username || !password) {
         throw new Error('Eksik bilgi');
@@ -18,7 +18,7 @@ async signUp(supabaseUrl, anonKey, username, password) {
             headers: {
                 'Content-Type': 'application/json',
                 'apikey': anonKey,
-                'Authorization': `Bearer ${anonKey}`,   // ← Bu satır sorunlu
+                'Authorization': `Bearer ${anonKey}`,   // ← Anon key ile
                 'Prefer': 'resolution=merge-duplicates'
             },
             body: JSON.stringify({
@@ -34,11 +34,12 @@ async signUp(supabaseUrl, anonKey, username, password) {
         try { data = JSON.parse(text); } catch (e) { data = text; }
 
         if (!response.ok) {
-            console.error("Supabase Response:", response.status, data);
-            return { ok: false, error: { message: data?.message || data?.error || 'Kayıt başarısız' } };
+            console.error("Supabase Error:", response.status, data);
+            const msg = data?.message || data?.error || 'Kayıt başarısız (RLS hatası)';
+            return { ok: false, error: { message: msg } };
         }
 
-        return { ok: true, message: 'Kayıt başarılı!' };
+        return { ok: true, message: 'Kayıt başarılı! Şimdi giriş yapabilirsiniz.' };
     } catch (err) {
         console.error('SignUp Error:', err);
         return { ok: false, error: { message: err.message } };
