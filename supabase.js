@@ -1,50 +1,53 @@
-// supabase.js - Güncel Versiyon
+// supabase.js - Düzeltilmiş ve Temiz Versiyon
 
 window.supabaseUtils = {
 
     // ========================
-// KAYIT OL (Service Role ile - Güvenli)
- // ========================
-async signUp(supabaseUrl, anonKey, username, password) {
-    if (!supabaseUrl || !anonKey || !username || !password) {
-        throw new Error('Eksik bilgi');
-    }
-
-    const url = supabaseUrl.replace(/\/$/, '') + '/rest/v1/accounts';
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'apikey': anonKey,
-                'Authorization': `Bearer ${anonKey}`,   // ← Anon key ile
-                'Prefer': 'resolution=merge-duplicates'
-            },
-            body: JSON.stringify({
-                username: username,
-                password: password,
-                permission: 1,
-                email: null
-            })
-        });
-
-        const text = await response.text();
-        let data;
-        try { data = JSON.parse(text); } catch (e) { data = text; }
-
-        if (!response.ok) {
-            console.error("Supabase Error:", response.status, data);
-            const msg = data?.message || data?.error || 'Kayıt başarısız (RLS hatası)';
-            return { ok: false, error: { message: msg } };
+    // KAYIT OL
+    // ========================
+    async signUp(supabaseUrl, anonKey, username, password) {
+        if (!supabaseUrl || !anonKey || !username || !password) {
+            throw new Error('Supabase URL, Anon Key, username ve password gereklidir.');
         }
 
-        return { ok: true, message: 'Kayıt başarılı! Şimdi giriş yapabilirsiniz.' };
-    } catch (err) {
-        console.error('SignUp Error:', err);
-        return { ok: false, error: { message: err.message } };
-    }
-}
+        const url = supabaseUrl.replace(/\/$/, '') + '/rest/v1/accounts';
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': anonKey,
+                    'Authorization': `Bearer ${anonKey}`,
+                    'Prefer': 'resolution=merge-duplicates'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password,
+                    permission: 1,
+                    email: null
+                })
+            });
+
+            const text = await response.text();
+            let data;
+            try { data = JSON.parse(text); } catch (e) { data = text; }
+
+            if (!response.ok) {
+                console.error("Supabase Error:", response.status, data);
+                const msg = data?.message || data?.error || 'Kayıt başarısız (RLS hatası)';
+                return { ok: false, error: { message: msg } };
+            }
+
+            return { 
+                ok: true, 
+                message: 'Kayıt başarılı! Şimdi giriş yapabilirsiniz.' 
+            };
+        } catch (err) {
+            console.error('SignUp Error:', err);
+            return { ok: false, error: { message: err.message } };
+        }
+    },
 
     // ========================
     // GİRİŞ YAP (Şifre Kontrolü)
@@ -54,7 +57,7 @@ async signUp(supabaseUrl, anonKey, username, password) {
             return { ok: false, error: { message: 'Eksik bilgi' } };
         }
 
-        const url = supabaseUrl.replace(/\/$/, '') + '/rest/v1/accounts?select=permission,username&username=eq.' + encodeURIComponent(username);
+        const url = supabaseUrl.replace(/\/$/, '') + '/rest/v1/accounts?select=permission,username,password&username=eq.' + encodeURIComponent(username);
 
         try {
             const response = await fetch(url, {
@@ -72,7 +75,6 @@ async signUp(supabaseUrl, anonKey, username, password) {
 
             const user = data[0];
 
-            // Basit şifre karşılaştırması (gerçek projede hash kullanılmalı)
             if (user.password !== password) {
                 return { ok: false, error: { message: 'Kullanıcı adı veya şifre yanlış!' } };
             }
@@ -88,7 +90,7 @@ async signUp(supabaseUrl, anonKey, username, password) {
     },
 
     // ========================
-    // PERMISSION KONTROLÜ (JWT ile)
+    // PERMISSION KONTROLÜ
     // ========================
     async getUserPermission(supabaseUrl, anonKey) {
         const token = sessionStorage.getItem('supabase_access_token');
@@ -124,7 +126,10 @@ async function sendServerCommand(command, args = '') {
         const res = await fetch(`${baseUrl}/api/command`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ command, args: args || '' })
+            body: JSON.stringify({ 
+                command: command, 
+                args: args || '' 
+            })
         });
 
         if (!res.ok) {
@@ -135,9 +140,14 @@ async function sendServerCommand(command, args = '') {
         const text = await res.text();
         return { ok: true, message: text || 'Komut gönderildi.' };
     } catch (err) {
-        return { ok: false, message: 'Sunucuya bağlanılamadı.<br>Hata: ' + err.message };
+        return { 
+            ok: false, 
+            message: 'Sunucuya bağlanılamadı.<br>Hata: ' + err.message 
+        };
     }
 }
 
+// Global erişim
 window.sendServerCommand = sendServerCommand;
-console.log('✅ supabase.js yüklendi - Login + Permission + Command hazır');
+
+console.log('✅ supabase.js başarıyla yüklendi - Login, Kayıt ve Komut sistemi hazır.');
