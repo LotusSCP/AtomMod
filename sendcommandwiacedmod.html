@@ -16,7 +16,7 @@
             font-weight: bold; 
         }
         .container { 
-            max-width: 1000px; 
+            max-width: 900px; 
             margin: 20px auto; 
             padding: 30px; 
             background: #111; 
@@ -42,7 +42,7 @@
             border: none; 
             border-radius: 10px; 
             cursor: pointer; 
-            margin-top: 20px; 
+            margin-top: 25px; 
             font-weight: bold;
         }
         button:hover { background: #0c0; }
@@ -56,13 +56,14 @@
         }
         .success { background: #002200; color: #0f0; }
         .error { background: #220000; color: #ff6666; }
+        .permission-ok { color: #0f0; font-size: 20px; }
     </style>
 </head>
 <body>
     <div class="header">AtomMod × CedMod Komut Paneli</div>
 
     <div class="container">
-        <p id="permissionInfo" style="text-align:center; font-size:19px; margin-bottom:25px;"></p>
+        <p id="permissionInfo" class="permission-ok"></p>
 
         <label>Komut Türü:</label>
         <select id="commandSelect">
@@ -76,45 +77,43 @@
         </select>
 
         <label>Argüman / Mesaj:</label>
-        <input type="text" id="commandArgs" placeholder="Mesaj veya komut argümanı yazın...">
+        <input type="text" id="commandArgs" placeholder="Mesaj veya argüman yazın...">
 
         <button id="sendBtn">🚀 Komutu CedMod ile Gönder</button>
 
         <div id="result" class="result"></div>
     </div>
 
-    <!-- === CEDMOD SCRIPT'LERİ BURAYA YÜKLENİYOR === -->
-    <script src="https://assets.cedmod.nl/_framework/blazor.webassembly.js" autostart="false"></script>
-    <script src="https://assets.cedmod.nl/_content/MudBlazor/MudBlazor.min.js"></script>
-    <script src="https://assets.cedmod.nl/_content/Blazor-ApexCharts/js/apex-charts.min.js"></script>
-    <script src="https://assets.cedmod.nl/_content/Blazor-ApexCharts/js/blazor-apex-charts.js"></script>
-    <script src="https://assets.cedmod.nl/_content/CodeBeam.MudBlazor.Extensions/MudExtensions.min.js"></script>
-    <script src="https://assets.cedmod.nl/tkLogs.js?p=1"></script>
-
     <script src="supabase.js"></script>
     <script src="app.js"></script>
 
     <script>
-        async function getPermission() {
-            try {
-                return await window.supabaseUtils.getUserPermission(
-                    window.atommodApp.defaultSupabaseUrl,
-                    window.atommodApp.defaultSupabaseAnon
-                );
-            } catch (e) {
-                return Number(sessionStorage.getItem('atommod_permission') || 0);
-            }
+        // Basit ve Güvenilir Yetki Kontrolü
+        function getPermission() {
+            // 1. SessionStorage'dan al (login sonrası kaydedilen)
+            let perm = Number(sessionStorage.getItem('atommod_permission'));
+            
+            // 2. LocalStorage'dan al (fallback)
+            if (!perm) perm = Number(localStorage.getItem('atommod_permission'));
+            
+            // 3. Varsayılan değer
+            if (!perm) perm = 0;
+
+            return perm;
         }
 
         window.addEventListener('load', async () => {
-            const perm = await getPermission();
+            const perm = getPermission();
             const infoEl = document.getElementById('permissionInfo');
 
+            console.log("Mevcut yetki seviyesi:", perm);
+
             if (perm >= 5) {
-                infoEl.innerHTML = `✅ Yetki: <b>${perm}</b> — CedMod Komutları Aktif`;
+                infoEl.innerHTML = `✅ Yetki seviyesi: <b>${perm}</b> — Komut gönderme aktif`;
             } else {
                 infoEl.innerHTML = `❌ Yetki yetersiz (${perm})`;
                 document.getElementById('sendBtn').disabled = true;
+                return;
             }
 
             // Komut Gönderme
@@ -124,7 +123,7 @@
                 const resultBox = document.getElementById('result');
 
                 resultBox.className = 'result';
-                resultBox.textContent = 'CedMod üzerinden komut gönderiliyor...';
+                resultBox.textContent = 'Komut gönderiliyor...';
 
                 const res = await window.sendServerCommand(cmd, args);
 
