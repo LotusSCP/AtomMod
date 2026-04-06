@@ -3,156 +3,73 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>AtomMod - CedMod Komut Paneli</title>
-    
-    <!-- CedMod Stilleri -->
-    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
-    <link href="https://assets.cedmod.nl/_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
-    <link href="https://assets.cedmod.nl/_content/CodeBeam.MudBlazor.Extensions/MudExtensions.min.css" rel="stylesheet" />
-
+    <title>AtomMod - WebSocket Komut Paneli</title>
     <style>
-        body { background: #0a0a0a; color: #ddd; margin: 0; padding: 0; font-family: 'Roboto', sans-serif; }
-        .header { 
-            background: linear-gradient(90deg, #0f0, #006600); 
-            color: black; 
-            padding: 20px; 
-            text-align: center; 
-            font-size: 26px; 
-            font-weight: 500; 
-        }
-        .container { 
-            max-width: 850px; 
-            margin: 30px auto; 
-            padding: 30px; 
-            background: #121212; 
-            border-radius: 12px; 
-            border: 2px solid #0f0; 
-        }
-        label { display: block; margin: 15px 0 6px; font-weight: 500; color: #0f0; }
-        select, input { 
-            width: 100%; 
-            padding: 14px; 
-            background: #1e1e1e; 
-            color: white; 
-            border: 1px solid #0f0; 
-            border-radius: 6px; 
-            font-size: 16px; 
-        }
-        button { 
-            width: 100%; 
-            padding: 16px; 
-            margin-top: 25px; 
-            background: #0f0; 
-            color: black; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 19px; 
-            font-weight: bold;
-        }
+        body { background: #0a0a0a; color: #ddd; font-family: Arial, sans-serif; }
+        .container { max-width: 800px; margin: 40px auto; padding: 30px; background: #111; border-radius: 12px; border: 2px solid #0f0; }
+        select, input { width: 100%; padding: 14px; margin: 10px 0; background: #1f1f1f; color: white; border: 1px solid #0f0; border-radius: 6px; }
+        button { width: 100%; padding: 16px; margin-top: 20px; background: #0f0; color: black; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; }
         button:hover { background: #0c0; }
-        .result { 
-            margin-top: 25px; 
-            padding: 18px; 
-            border-radius: 8px; 
-            min-height: 90px; 
-            font-size: 16px; 
-            white-space: pre-wrap; 
-        }
+        .result { margin-top: 20px; padding: 15px; border-radius: 8px; min-height: 100px; }
         .success { background: #002200; color: #0f0; }
         .error { background: #220000; color: #ff6666; }
     </style>
 </head>
 <body>
-    <div class="header">AtomMod × CedMod Komut Paneli</div>
-
     <div class="container">
-        <p id="permissionInfo" style="text-align:center; font-size: 21px; margin-bottom: 25px;"></p>
+        <h1>🔌 WebSocket Komut Paneli</h1>
+        <p id="permissionInfo" style="text-align:center; font-size:20px;"></p>
 
-        <label>Komut Türü:</label>
+        <label>Komut:</label>
         <select id="commandSelect">
-            <option value="broadcast">Broadcast Mesajı</option>
-            <option value="bc">Kısa Broadcast</option>
+            <option value="broadcast">Broadcast</option>
             <option value="roundrestart">Round Restart</option>
-            <option value="cassie">Cassie Mesajı</option>
-            <option value="nuke">Nuke Başlat</option>
-            <option value="stopnuke">Nuke Durdur</option>
-            <option value="kick">Kick Oyuncu</option>
+            <option value="cassie">Cassie</option>
+            <option value="nuke">Nuke</option>
+            <option value="kick">Kick</option>
         </select>
 
-        <label>Argüman / Mesaj:</label>
-        <input type="text" id="commandArgs" placeholder="Mesajınızı veya argümanı buraya yazın...">
+        <label>Argüman:</label>
+        <input type="text" id="commandArgs" placeholder="Mesaj veya argüman...">
 
-        <button id="sendBtn">🚀 Komutu Gönder</button>
+        <button id="sendBtn">Gönder</button>
 
         <div id="result" class="result"></div>
     </div>
 
-    <!-- CedMod Scriptleri -->
-    <script src="https://assets.cedmod.nl/_framework/blazor.webassembly.js" autostart="false"></script>
-    <script src="https://assets.cedmod.nl/_content/MudBlazor/MudBlazor.min.js"></script>
-    <script src="https://assets.cedmod.nl/_content/Blazor-ApexCharts/js/apex-charts.min.js"></script>
-    <script src="https://assets.cedmod.nl/_content/Blazor-ApexCharts/js/blazor-apex-charts.js"></script>
-    <script src="https://assets.cedmod.nl/_content/CodeBeam.MudBlazor.Extensions/MudExtensions.min.js"></script>
-    <script src="https://assets.cedmod.nl/tkLogs.js?p=1"></script>
-
-    <script src="supabase.js"></script>
-    <script src="app.js"></script>
-
     <script>
-        // Yetkiyi birden fazla yerden al (daha güvenli)
-        function getPermission() {
-            let perm = 0;
+        let ws = null;
 
-            // 1. SessionStorage (en yeni)
-            perm = Number(sessionStorage.getItem('atommod_permission'));
-            if (perm > 0) return perm;
+        function connectWebSocket() {
+            ws = new WebSocket("ws://atommod.mcsunucun.com:29075/ws/");
 
-            // 2. LocalStorage (login sırasında kaydedilen)
-            perm = Number(localStorage.getItem('atommod_permission'));
-            if (perm > 0) return perm;
+            ws.onopen = () => {
+                console.log("WebSocket bağlantısı kuruldu");
+            };
 
-            // 3. Login sonrası kaydedilen lastuser kontrolü
-            if (localStorage.getItem('atommod_logged_in') === 'true') {
-                perm = 65535; // Geçici güvenlik - yetkin 65535 ise zorla ver
-            }
+            ws.onmessage = (event) => {
+                const resultBox = document.getElementById('result');
+                resultBox.className = 'result success';
+                resultBox.textContent = event.data;
+            };
 
-            return perm;
+            ws.onerror = (err) => {
+                console.error("WebSocket hatası", err);
+            };
         }
 
-        window.addEventListener('load', async () => {
-            const perm = getPermission();
-            const infoEl = document.getElementById('permissionInfo');
+        window.addEventListener('load', () => {
+            connectWebSocket();
 
-            console.log("Okunan yetki:", perm);
-
-            if (perm >= 5) {
-                infoEl.style.color = '#0f0';
-                infoEl.innerHTML = `✅ Yetki: <strong>${perm}</strong> — Komut gönderme aktif`;
-            } else {
-                infoEl.style.color = '#ff4444';
-                infoEl.innerHTML = `❌ Yetki yetersiz (${perm})<br><small>Giriş yapıp tekrar deneyin.</small>`;
-                document.getElementById('sendBtn').disabled = true;
-                return;
-            }
-
-            // Komut Gönderme
-            document.getElementById('sendBtn').addEventListener('click', async () => {
+            document.getElementById('sendBtn').addEventListener('click', () => {
                 const cmd = document.getElementById('commandSelect').value;
                 const args = document.getElementById('commandArgs').value.trim();
-                const resultBox = document.getElementById('result');
 
-                resultBox.className = 'result';
-                resultBox.textContent = 'Komut gönderiliyor...';
-
-                const res = await window.sendServerCommand(cmd, args);
-
-                if (res.ok) {
-                    resultBox.className = 'result success';
-                    resultBox.textContent = `✅ Komut gönderildi!\n\n${res.message}`;
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ command: cmd, args: args }));
+                    document.getElementById('result').textContent = "Komut gönderildi...";
                 } else {
-                    resultBox.className = 'result error';
-                    resultBox.textContent = `❌ ${res.message}`;
+                    alert("WebSocket bağlantısı yok!");
                 }
             });
         });
