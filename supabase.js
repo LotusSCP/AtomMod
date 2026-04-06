@@ -1,9 +1,9 @@
-// supabase.js - AtomMod Supabase + Web API (Güncel)
+// supabase.js - Güncel Versiyon
 
 window.supabaseUtils = {
 
     // ========================
-    // KAYIT OL (Supabase)
+    // KAYIT OL
     // ========================
     async signUp(supabaseUrl, anonKey, username, password) {
         if (!supabaseUrl || !anonKey || !username || !password) {
@@ -34,36 +34,25 @@ window.supabaseUtils = {
             try { data = JSON.parse(text); } catch (e) { data = text; }
 
             if (!response.ok) {
-                const errorMsg = data?.message || data?.error || data?.details || 'Kayıt başarısız';
-                console.error('Supabase SignUp Error:', errorMsg);
+                const errorMsg = data?.message || data?.error || 'Kayıt başarısız';
                 return { ok: false, error: { message: errorMsg } };
             }
 
-            return {
-                ok: true,
-                data: data,
-                message: 'Kayıt başarılı!'
-            };
-
+            return { ok: true, message: 'Kayıt başarılı!' };
         } catch (err) {
-            console.error('Supabase SignUp Error:', err);
-            return {
-                ok: false,
-                error: { message: err.message || 'Bağlantı hatası' }
-            };
+            return { ok: false, error: { message: err.message } };
         }
     },
 
     // ========================
-    // SUNUCU DURUMU
+    // GİRİŞ YAP (Şifre Kontrolü)
     // ========================
-    async fetchServerStatus(supabaseUrl, anonKey) {
-        if (!supabaseUrl || !anonKey) {
-            throw new Error('Supabase URL ve Anon Key gereklidir.');
+    async login(supabaseUrl, anonKey, username, password) {
+        if (!supabaseUrl || !anonKey || !username || !password) {
+            return { ok: false, error: { message: 'Eksik bilgi' } };
         }
 
-        const url = supabaseUrl.replace(/\/$/, '') +
-            `/rest/v1/player_stats?select=nickname,steam_id,total_play_seconds,kills,deaths,last_seen_utc,server_ip,server_number&order=last_seen_utc.desc`;
+        const url = supabaseUrl.replace(/\/$/, '') + '/rest/v1/accounts?select=permission,username&username=eq.' + encodeURIComponent(username);
 
         try {
             const response = await fetch(url, {
@@ -73,24 +62,58 @@ window.supabaseUtils = {
                 }
             });
 
-            const text = await response.text();
-            let data;
-            try { data = JSON.parse(text); } catch (e) { data = text; }
+            const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(`Supabase hatası (${response.status}): ${data?.message || text}`);
+            if (!response.ok || !data || data.length === 0) {
+                return { ok: false, error: { message: 'Kullanıcı adı veya şifre yanlış!' } };
             }
 
-            return data || [];
+            const user = data[0];
+
+            // Basit şifre karşılaştırması (gerçek projede hash kullanılmalı)
+            if (user.password !== password) {
+                return { ok: false, error: { message: 'Kullanıcı adı veya şifre yanlış!' } };
+            }
+
+            return {
+                ok: true,
+                permission: user.permission || 0,
+                username: user.username
+            };
         } catch (err) {
-            console.error('fetchServerStatus Error:', err);
-            throw err;
+            return { ok: false, error: { message: 'Bağlantı hatası' } };
+        }
+    },
+
+    // ========================
+    // PERMISSION KONTROLÜ (JWT ile)
+    // ========================
+    async getUserPermission(supabaseUrl, anonKey) {
+        const token = sessionStorage.getItem('supabase_access_token');
+        if (!token) return 0;
+
+        const url = supabaseUrl.replace(/\/$/, '') + '/rest/v1/accounts?select=permission';
+
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'apikey': anonKey,
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) return 0;
+            const data = await response.json();
+            return data && data.length > 0 ? (data[0].permission || 0) : 0;
+        } catch (err) {
+            console.error('Permission hatası:', err);
+            return 0;
         }
     }
 };
 
 // ========================
-// SUNUCU KOMUT GÖNDERME (kontrol.html için)
+// SUNUCU KOMUT GÖNDERME
 // ========================
 async function sendServerCommand(command, args = '') {
     const baseUrl = window.atommodApp?.baseUrl || 'https://atommod.mcsunucun.com:29075';
@@ -99,10 +122,7 @@ async function sendServerCommand(command, args = '') {
         const res = await fetch(`${baseUrl}/api/command`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                command: command, 
-                args: args || '' 
-            })
+            body: JSON.stringify({ command, args: args || '' })
         });
 
         if (!res.ok) {
@@ -111,17 +131,11 @@ async function sendServerCommand(command, args = '') {
         }
 
         const text = await res.text();
-        return { ok: true, message: text || 'Komut başarıyla gönderildi.' };
+        return { ok: true, message: text || 'Komut gönderildi.' };
     } catch (err) {
-        console.error('sendServerCommand Error:', err);
-        return { 
-            ok: false, 
-            message: 'Sunucuya bağlanılamadı.<br>Hata: ' + err.message 
-        };
+        return { ok: false, message: 'Sunucuya bağlanılamadı.<br>Hata: ' + err.message };
     }
 }
 
-// Global erişim
 window.sendServerCommand = sendServerCommand;
-
-console.log('✅ supabase.js yüklendi - signUp + sendServerCommand hazır.');
+console.log('✅ supabase.js yüklendi - Login + Permission + Command hazır');
