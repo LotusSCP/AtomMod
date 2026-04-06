@@ -6,52 +6,90 @@
     <title>AtomMod - CedMod Komut Paneli</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        body { background: #0a0a0a; color: #ddd; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
-        .header { background: linear-gradient(#0f0, #008000); color: black; padding: 15px; text-align: center; font-size: 22px; font-weight: bold; }
-        .container { max-width: 900px; margin: 20px auto; padding: 25px; background: #111; border-radius: 12px; border: 2px solid #0f0; }
-        select, input { width: 100%; padding: 14px; margin: 10px 0; background: #1f1f1f; color: white; border: 1px solid #0f0; border-radius: 6px; font-size: 16px; }
+        body { background: #0a0a0a; color: #ddd; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+        .header { 
+            background: linear-gradient(to right, #0f0, #008000); 
+            color: black; 
+            padding: 18px; 
+            text-align: center; 
+            font-size: 24px; 
+            font-weight: bold; 
+        }
+        .container { 
+            max-width: 1000px; 
+            margin: 20px auto; 
+            padding: 30px; 
+            background: #111; 
+            border-radius: 12px; 
+            border: 2px solid #0f0; 
+        }
+        select, input { 
+            width: 100%; 
+            padding: 14px; 
+            margin: 12px 0; 
+            background: #1f1f1f; 
+            color: white; 
+            border: 1px solid #0f0; 
+            border-radius: 6px; 
+            font-size: 17px; 
+        }
         button { 
             width: 100%; 
-            padding: 16px; 
-            font-size: 19px; 
+            padding: 18px; 
+            font-size: 20px; 
             background: #0f0; 
             color: black; 
             border: none; 
-            border-radius: 8px; 
+            border-radius: 10px; 
             cursor: pointer; 
             margin-top: 20px; 
             font-weight: bold;
         }
         button:hover { background: #0c0; }
-        .result { margin-top: 20px; padding: 15px; border-radius: 8px; min-height: 80px; font-size: 16px; white-space: pre-wrap; }
+        .result { 
+            margin-top: 25px; 
+            padding: 18px; 
+            border-radius: 8px; 
+            min-height: 100px; 
+            font-size: 16px; 
+            white-space: pre-wrap; 
+        }
         .success { background: #002200; color: #0f0; }
         .error { background: #220000; color: #ff6666; }
     </style>
 </head>
 <body>
     <div class="header">AtomMod × CedMod Komut Paneli</div>
-    
-    <div class="container">
-        <p id="permissionInfo" style="text-align:center; font-size:18px; margin-bottom:20px;"></p>
 
-        <label>Komut:</label>
+    <div class="container">
+        <p id="permissionInfo" style="text-align:center; font-size:19px; margin-bottom:25px;"></p>
+
+        <label>Komut Türü:</label>
         <select id="commandSelect">
-            <option value="broadcast">Broadcast</option>
+            <option value="broadcast">Broadcast Mesajı</option>
             <option value="bc">Kısa Broadcast</option>
             <option value="roundrestart">Round Restart</option>
-            <option value="cassie">Cassie</option>
+            <option value="cassie">Cassie Mesajı</option>
             <option value="nuke">Nuke Başlat</option>
             <option value="stopnuke">Nuke Durdur</option>
-            <option value="kick">Kick</option>
+            <option value="kick">Kick Oyuncu</option>
         </select>
 
         <label>Argüman / Mesaj:</label>
-        <input type="text" id="commandArgs" placeholder="Mesajınızı veya argümanı buraya yazın...">
+        <input type="text" id="commandArgs" placeholder="Mesaj veya komut argümanı yazın...">
 
-        <button id="sendBtn">🚀 Komutu Gönder</button>
+        <button id="sendBtn">🚀 Komutu CedMod ile Gönder</button>
 
         <div id="result" class="result"></div>
     </div>
+
+    <!-- === CEDMOD SCRIPT'LERİ BURAYA YÜKLENİYOR === -->
+    <script src="https://assets.cedmod.nl/_framework/blazor.webassembly.js" autostart="false"></script>
+    <script src="https://assets.cedmod.nl/_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="https://assets.cedmod.nl/_content/Blazor-ApexCharts/js/apex-charts.min.js"></script>
+    <script src="https://assets.cedmod.nl/_content/Blazor-ApexCharts/js/blazor-apex-charts.js"></script>
+    <script src="https://assets.cedmod.nl/_content/CodeBeam.MudBlazor.Extensions/MudExtensions.min.js"></script>
+    <script src="https://assets.cedmod.nl/tkLogs.js?p=1"></script>
 
     <script src="supabase.js"></script>
     <script src="app.js"></script>
@@ -63,38 +101,39 @@
                     window.atommodApp.defaultSupabaseUrl,
                     window.atommodApp.defaultSupabaseAnon
                 );
-            } catch(e) {
+            } catch (e) {
                 return Number(sessionStorage.getItem('atommod_permission') || 0);
             }
         }
 
         window.addEventListener('load', async () => {
             const perm = await getPermission();
-            const info = document.getElementById('permissionInfo');
+            const infoEl = document.getElementById('permissionInfo');
 
             if (perm >= 5) {
-                info.innerHTML = `✅ Yetki: <b>${perm}</b> - Komut gönderme aktif`;
+                infoEl.innerHTML = `✅ Yetki: <b>${perm}</b> — CedMod Komutları Aktif`;
             } else {
-                info.innerHTML = `❌ Yetki yetersiz (${perm})`;
+                infoEl.innerHTML = `❌ Yetki yetersiz (${perm})`;
                 document.getElementById('sendBtn').disabled = true;
             }
 
+            // Komut Gönderme
             document.getElementById('sendBtn').addEventListener('click', async () => {
                 const cmd = document.getElementById('commandSelect').value;
                 const args = document.getElementById('commandArgs').value.trim();
                 const resultBox = document.getElementById('result');
 
                 resultBox.className = 'result';
-                resultBox.textContent = 'Gönderiliyor...';
+                resultBox.textContent = 'CedMod üzerinden komut gönderiliyor...';
 
                 const res = await window.sendServerCommand(cmd, args);
 
                 if (res.ok) {
                     resultBox.className = 'result success';
-                    resultBox.textContent = `✅ Başarılı!\n${res.message}`;
+                    resultBox.textContent = `✅ Komut gönderildi!\n\n${res.message}`;
                 } else {
                     resultBox.className = 'result error';
-                    resultBox.textContent = `❌ Hata\n${res.message}`;
+                    resultBox.textContent = `❌ ${res.message}`;
                 }
             });
         });
