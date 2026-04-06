@@ -5,44 +5,45 @@ window.supabaseUtils = {
     // ========================
     // KAYIT OL
     // ========================
-    async signUp(supabaseUrl, anonKey, username, password) {
-        if (!supabaseUrl || !anonKey || !username || !password) {
-            throw new Error('Supabase URL, Anon Key, username ve password gereklidir.');
+async signUp(supabaseUrl, anonKey, username, password) {
+    if (!supabaseUrl || !anonKey || !username || !password) {
+        throw new Error('Eksik bilgi');
+    }
+
+    const url = supabaseUrl.replace(/\/$/, '') + '/rest/v1/accounts';
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': anonKey,
+                'Authorization': `Bearer ${anonKey}`,   // ← Bu satır sorunlu
+                'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify({
+                username: username,
+                password: password,
+                permission: 1,
+                email: null
+            })
+        });
+
+        const text = await response.text();
+        let data;
+        try { data = JSON.parse(text); } catch (e) { data = text; }
+
+        if (!response.ok) {
+            console.error("Supabase Response:", response.status, data);
+            return { ok: false, error: { message: data?.message || data?.error || 'Kayıt başarısız' } };
         }
 
-        const url = supabaseUrl.replace(/\/$/, '') + '/rest/v1/accounts';
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': anonKey,
-                    'Authorization': `Bearer ${anonKey}`,
-                    'Prefer': 'resolution=merge-duplicates'
-                },
-                body: JSON.stringify({
-                    username: username,
-                    password: password,
-                    permission: 1,
-                    email: null
-                })
-            });
-
-            const text = await response.text();
-            let data;
-            try { data = JSON.parse(text); } catch (e) { data = text; }
-
-            if (!response.ok) {
-                const errorMsg = data?.message || data?.error || 'Kayıt başarısız';
-                return { ok: false, error: { message: errorMsg } };
-            }
-
-            return { ok: true, message: 'Kayıt başarılı!' };
-        } catch (err) {
-            return { ok: false, error: { message: err.message } };
-        }
-    },
+        return { ok: true, message: 'Kayıt başarılı!' };
+    } catch (err) {
+        console.error('SignUp Error:', err);
+        return { ok: false, error: { message: err.message } };
+    }
+}
 
     // ========================
     // GİRİŞ YAP (Şifre Kontrolü)
