@@ -41,7 +41,7 @@
     <script src="app.js"></script>
 
     <script>
-                this.socket = new Sockette(`${ss://s5.saganetwork.net:8080/api/servers/43ef2206-a5ff-4ff8-bfd5-9ac16a5dc11e/ws}`, {
+                this.socket = new Sockette(`${wss://s5.saganetwork.net:8080/api/servers/43ef2206-a5ff-4ff8-bfd5-9ac16a5dc11e/ws}`, {
             onmessage: (e) => {
                 try {
                     const { event, args } = JSON.parse(e.data);
