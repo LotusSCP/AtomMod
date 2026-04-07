@@ -3,36 +3,40 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>AtomMod - WebSocket Komut Paneli</title>
+    <title>AtomMod - Pterodactyl WebSocket Panel</title>
     <style>
-        body { background:#0a0a0a; color:#ddd; font-family:Arial; margin:0; padding:20px; }
-        .container { max-width:800px; margin:40px auto; padding:30px; background:#111; border-radius:12px; border:2px solid #0f0; }
-        select, input { width:100%; padding:14px; margin:10px 0; background:#1f1f1f; color:white; border:1px solid #0f0; border-radius:6px; font-size:16px; }
-        button { width:100%; padding:18px; margin-top:20px; background:#0f0; color:black; border:none; border-radius:8px; font-size:19px; cursor:pointer; }
-        button:hover { background:#0c0; }
-        .result { margin-top:25px; padding:18px; border-radius:8px; min-height:100px; font-size:16px; white-space:pre-wrap; }
-        .success { background:#002200; color:#0f0; }
-        .error { background:#220000; color:#ff6666; }
+        body { background: #0a0a0a; color: #ddd; font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 40px auto; padding: 30px; background: #111; border-radius: 12px; border: 2px solid #0f0; }
+        label { display: block; margin: 15px 0 8px; font-weight: bold; color: #0f0; }
+        select, input { width: 100%; padding: 14px; background: #1e1e1e; color: white; border: 1px solid #0f0; border-radius: 6px; font-size: 16px; }
+        button { width: 100%; padding: 16px; margin-top: 25px; background: #0f0; color: black; border: none; border-radius: 8px; font-size: 19px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0c0; }
+        .result { margin-top: 25px; padding: 18px; border-radius: 8px; min-height: 120px; font-size: 16px; white-space: pre-wrap; }
+        .success { background: #002200; color: #0f0; }
+        .error { background: #220000; color: #ff6666; }
+        .info { text-align: center; font-size: 18px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔌 WebSocket Komut Paneli</h1>
-        <p id="permissionInfo" style="text-align:center; font-size:20px; margin:20px 0;"></p>
+        <h1>🔌 Pterodactyl WebSocket Komut Paneli</h1>
+        <p id="permissionInfo" class="info"></p>
 
         <label>Komut Türü:</label>
         <select id="commandSelect">
-            <option value="broadcast">Broadcast</option>
+            <option value="broadcast">Broadcast Mesajı</option>
+            <option value="bc">Kısa Broadcast</option>
             <option value="roundrestart">Round Restart</option>
-            <option value="cassie">Cassie</option>
-            <option value="nuke">Nuke</option>
-            <option value="kick">Kick</option>
+            <option value="cassie">Cassie Mesajı</option>
+            <option value="nuke">Nuke Başlat</option>
+            <option value="stopnuke">Nuke Durdur</option>
+            <option value="kick">Kick Oyuncu</option>
         </select>
 
-        <label>Argüman:</label>
-        <input type="text" id="commandArgs" placeholder="Mesaj veya argüman...">
+        <label>Argüman / Mesaj:</label>
+        <input type="text" id="commandArgs" placeholder="Örn: Hoş geldiniz! veya oyuncu adı">
 
-        <button id="sendBtn">Gönder</button>
+        <button id="sendBtn">🚀 Komutu Gönder (WebSocket)</button>
 
         <div id="result" class="result"></div>
     </div>
@@ -41,145 +45,101 @@
     <script src="app.js"></script>
 
     <script>
-import Sockette from 'sockette';
-import { EventEmitter } from 'events';
+        let ws = null;
+        let authToken = null;
+        const SERVER_UUID = "43ef2206-a5ff-4ff8-bfd5-9ac16a5dc11e";   // Senin server UUID'n
+        const PANEL_URL = "https://panel.saganetwork.net";
 
-export class Websocket extends EventEmitter {
-    // Timer instance for this socket.
-    private timer: any = null;
+        async function getPermission() {
+            return Number(sessionStorage.getItem('atommod_permission') || localStorage.getItem('atommod_permission') || 0);
+        }
 
-    // The backoff for the timer, in milliseconds.
-    private backoff = 5000;
+        async function getWebsocketToken() {
+            try {
+                const res = await fetch(`${PANEL_URL}/api/client/servers/${SERVER_UUID}/websocket`, {
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json",
+                        // Eğer Pterodactyl API Key'in varsa buraya ekleyebilirsin. Şimdilik cookie ile deniyoruz.
+                    },
+                    credentials: "include"   // Cookie ile auth
+                });
 
-    // The socket instance being tracked.
-    private socket: Sockette | null = null;
-
-    // The URL being connected to for the socket.
-    private url: string | null = null;
-
-    // The authentication token passed along with every request to the Daemon.
-    // By default this token expires every 15 minutes and must therefore be
-    // refreshed at a pretty continuous interval. The socket server will respond
-    // with "token expiring" and "token expired" events when approaching 3 minutes
-    // and 0 minutes to expiry.
-    private token = '';
-
-    // Connects to the websocket instance and sets the token for the initial request.
-    connect(url: string): this {
-        this.url = url;
-
-        this.socket = new Sockette(`${https://panel.saganetwork.net/api/client/servers/43ef2206-a5ff-4ff8-bfd5-9ac16a5dc11e/websocket}`, {
-            onmessage: (e) => {
-                try {
-                    const { event, args } = JSON.parse(e.data);
-                    args ? this.emit(event, ...args) : this.emit(event);
-                } catch (ex) {
-                    console.warn('Failed to parse incoming websocket message.', ex);
+                const data = await res.json();
+                if (data.data && data.data.token && data.data.socket) {
+                    authToken = data.data.token;
+                    return data.data.socket;   // wss:// adresi
                 }
-            },
-            onopen: () => {
-                // Clear the timers, we managed to connect just fine.
-                this.timer && clearTimeout(this.timer);
-                this.backoff = 5000;
-
-                this.emit('SOCKET_OPEN');
-                this.authenticate();
-            },
-            onreconnect: () => {
-                this.emit('SOCKET_RECONNECT');
-                this.authenticate();
-            },
-            onclose: () => this.emit('SOCKET_CLOSE'),
-            onerror: (error) => this.emit('SOCKET_ERROR', error),
-        });
-
-        this.timer = setTimeout(() => {
-            this.backoff = this.backoff + 2500 >= 20000 ? 20000 : this.backoff + 2500;
-            this.socket && this.socket.close();
-            clearTimeout(this.timer);
-
-            // Re-attempt connecting to the socket.
-            this.connect(url);
-        }, this.backoff);
-
-        return this;
-    }
-
-    // Sets the authentication token to use when sending commands back and forth
-    // between the websocket instance.
-    setToken(token: string, isUpdate = false): this {
-        this.token = token;
-
-        if (isUpdate) {
-            this.authenticate();
+                throw new Error("Token alınamadı");
+            } catch (err) {
+                console.error("Token hatası:", err);
+                return null;
+            }
         }
 
-        return this;
-    }
+        async function connectWebSocket() {
+            const socketUrl = await getWebsocketToken();
+            if (!socketUrl) {
+                document.getElementById('result').innerHTML = "❌ WebSocket token alınamadı. Panel girişi yapın.";
+                return;
+            }
 
-    authenticate() {
-        if (this.url && this.token) {
-            this.send('auth', this.token);
-        }
-    }
+            ws = new WebSocket(socketUrl);
 
-    close(code?: number, reason?: string) {
-        this.url = null;
-        this.token = '';
-        this.socket && this.socket.close(code, reason);
-    }
-
-    open() {
-        this.socket && this.socket.open();
-    }
-
-    reconnect() {
-        this.socket && this.socket.reconnect();
-    }
-
-    send(event: string, payload?: string | string[]) {
-        this.socket &&
-            this.socket.send(
-                JSON.stringify({
-                    event,
-                    args: Array.isArray(payload) ? payload : [payload],
-                })
-            );
-
-        let socket = null;
-
-        function connect() {
-            socket = new WebSocket("wss://s5.saganetwork.net:8080/api/servers/43ef2206-a5ff-4ff8-bfd5-9ac16a5dc11e/ws");
-
-            socket.onopen = () => {
+            ws.onopen = () => {
                 console.log("WebSocket bağlandı");
-                document.getElementById('result').innerHTML = "✅ WebSocket bağlantısı kuruldu";
+                if (authToken) {
+                    ws.send(JSON.stringify({ event: "auth", args: [authToken] }));
+                }
+                document.getElementById('result').innerHTML = "✅ WebSocket bağlantısı kuruldu. Auth yapıldı.";
             };
 
-            socket.onmessage = (event) => {
+            ws.onmessage = (event) => {
                 const resultBox = document.getElementById('result');
-                resultBox.className = 'result success';
-                resultBox.textContent = event.data;
+                try {
+                    const msg = JSON.parse(event.data);
+                    resultBox.className = 'result success';
+                    resultBox.textContent = `📥 ${JSON.stringify(msg, null, 2)}`;
+                } catch (e) {
+                    resultBox.textContent = event.data;
+                }
             };
 
-            socket.onerror = () => {
+            ws.onerror = (err) => {
                 document.getElementById('result').innerHTML = "❌ WebSocket bağlantı hatası";
+                console.error(err);
             };
         }
 
-        window.addEventListener('load', () => {
-            connect();
+        window.addEventListener('load', async () => {
+            const perm = await getPermission();
+            const infoEl = document.getElementById('permissionInfo');
+
+            if (perm >= 5) {
+                infoEl.innerHTML = `✅ Yetki: <strong>${perm}</strong> — WebSocket aktif`;
+            } else {
+                infoEl.innerHTML = `❌ Yetki yetersiz (${perm})`;
+                document.getElementById('sendBtn').disabled = true;
+                return;
+            }
+
+            connectWebSocket();
 
             document.getElementById('sendBtn').addEventListener('click', () => {
-                if (socket && socket.readyState === WebSocket.OPEN) {
-                    const cmd = document.getElementById('commandSelect').value;
-                    const args = document.getElementById('commandArgs').value.trim();
-
-                    socket.send(JSON.stringify({ command: cmd, args: args }));
-                    document.getElementById('result').innerHTML = "Komut gönderildi...";
-                } else {
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
                     alert("WebSocket bağlı değil!");
+                    return;
                 }
+
+                const cmd = document.getElementById('commandSelect').value;
+                const args = document.getElementById('commandArgs').value.trim();
+
+                ws.send(JSON.stringify({
+                    event: "send command",
+                    args: [args ? `${cmd} ${args}` : cmd]
+                }));
+
+                document.getElementById('result').innerHTML = `📤 Komut gönderildi: ${cmd} ${args}`;
             });
         });
     </script>
