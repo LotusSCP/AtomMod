@@ -56,7 +56,7 @@
 
             // Basit fallback - WebSocket yerine HTTP proxy denemesi
             try {
-                const res = await fetch('https://atommod.mcsunucun.com:29075/api/command', {
+                const res = await fetch('https://panel.saganetwork.net/api/client/servers/43ef2206-a5ff-4ff8-bfd5-9ac16a5dc11e/websocket', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ command: cmd, args: args })
