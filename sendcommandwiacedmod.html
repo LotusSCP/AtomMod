@@ -68,7 +68,7 @@ export class Websocket extends EventEmitter {
     connect(url: string): this {
         this.url = url;
 
-        this.socket = new Sockette(`${this.url}`, {
+        this.socket = new Sockette(`${https://panel.saganetwork.net/api/client/servers/43ef2206-a5ff-4ff8-bfd5-9ac16a5dc11e/websocket}`, {
             onmessage: (e) => {
                 try {
                     const { event, args } = JSON.parse(e.data);
