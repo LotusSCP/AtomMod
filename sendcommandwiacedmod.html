@@ -70,29 +70,39 @@ document.getElementById('sendBtn').addEventListener('click', async () => {
 
     const resultBox = document.getElementById('result');
     resultBox.className = 'result';
-    resultBox.textContent = 'Komut gönderiliyor...';
+    resultBox.textContent = 'Komut Pterodactyl API ile gönderiliyor...';
 
-    const API_KEY = "cok_gizli_sifrenizi_buraya_yazin";   // Plugin'dekiyle AYNI olsun!
-    const PORT = 29076;   // Yukarıda belirlediğin port
+    // ←←← BURAYI KENDİ BİLGİLERİNLE DOLDUR ←←←
+    const PANEL_URL = "https://panel.saganetwork.net";   // Saga panel adresin
+    const SERVER_ID = "buraya_sunucu_id_ni_yaz";         // Örn: "abc123-def456"
+    const API_KEY = "buraya_api_key_ni_yapistir";        // Çok uzun bir token
 
-    const encodedCmd = encodeURIComponent(fullCommand);
-    const url = `http://atommod.mcsunucun.com:${PORT}/command/?key=${API_KEY}&cmd=${encodedCmd}`;
+    const url = `${PANEL_URL}/api/client/servers/${SERVER_ID}/command`;
 
     try {
-        const res = await fetch(url, { method: 'GET' });
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                command: fullCommand
+            })
+        });
 
-        const text = await res.text();
-
-        if (res.ok) {
+        if (res.status === 204 || res.ok) {
             resultBox.className = 'result success';
-            resultBox.textContent = text;
+            resultBox.textContent = `✅ Komut başarıyla gönderildi!\n\n${fullCommand}`;
         } else {
+            const errorText = await res.text();
             resultBox.className = 'result error';
-            resultBox.textContent = `❌ Hata (${res.status}): ${text}`;
+            resultBox.textContent = `❌ Hata (${res.status}):\n${errorText}`;
         }
     } catch (err) {
         resultBox.className = 'result error';
-        resultBox.textContent = `❌ Bağlantı hatası\nPort ${PORT} kapalı olabilir.\nSagaNetwork panelinden port açmayı dene.\n\nHata: ${err.message}`;
+        resultBox.textContent = `❌ Bağlantı hatası\n\nAPI Key veya Server ID yanlış olabilir.\n\nHata: ${err.message}`;
     }
 });
         });
