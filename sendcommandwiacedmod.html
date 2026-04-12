@@ -1,64 +1,99 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <title>SCPSL Komut Paneli</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AtomMod - Uzaktan Komut</title>
     <style>
-        body { font-family: Arial; background: #1e1e1e; color: #fff; padding: 20px; }
-        input, button { padding: 10px; font-size: 16px; margin: 5px; }
-        button { background: #0066ff; color: white; border: none; cursor: pointer; }
-        button:hover { background: #0055dd; }
-        #sonuc { margin-top: 20px; white-space: pre-wrap; background: #333; padding: 15px; border-radius: 5px; }
+        body { background: #0a0a0a; color: #ddd; font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 40px auto; padding: 30px; background: #111; border-radius: 12px; border: 2px solid #0f0; }
+        label { display: block; margin: 15px 0 8px; font-weight: bold; color: #0f0; }
+        select, input { width: 100%; padding: 14px; background: #1e1e1e; color: white; border: 1px solid #0f0; border-radius: 6px; font-size: 16px; }
+        button { width: 100%; padding: 18px; margin-top: 25px; background: #0f0; color: black; border: none; border-radius: 8px; font-size: 19px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0c0; }
+        .result { margin-top: 25px; padding: 18px; border-radius: 8px; min-height: 100px; white-space: pre-wrap; }
+        .success { background: #002200; color: #0f0; }
+        .error { background: #220000; color: #ff6666; }
     </style>
 </head>
 <body>
-    <h2>SCPSL Sunucu Komut Paneli</h2>
-    
-    <input type="text" id="komut" placeholder="broadcast Merhaba Dünya" style="width: 400px;">
-    <button onclick="gonderKomut()">Komut Gönder</button>
+    <div class="container">
+        <h1>🔧 Uzaktan Komut Paneli (TCP)</h1>
+        <p id="permissionInfo" style="text-align:center; font-size:20px; margin:20px 0;"></p>
 
-    <div id="sonuc"></div>
+        <label>Komut Türü:</label>
+        <select id="commandSelect">
+            <option value="broadcast">Broadcast</option>
+            <option value="bc">Kısa Broadcast</option>
+            <option value="roundrestart">Round Restart</option>
+            <option value="cassie">Cassie</option>
+            <option value="nuke">Nuke</option>
+            <option value="stopnuke">Nuke Durdur</option>
+            <option value="kick">Kick</option>
+            <option value="raw">Raw Komut</option>
+        </select>
+
+        <label>Argüman / Mesaj:</label>
+        <input type="text" id="commandArgs" placeholder="Mesaj veya argüman...">
+
+        <button id="sendBtn">🚀 Komutu Gönder (TCP)</button>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script src="supabase.js"></script>
+    <script src="app.js"></script>
 
     <script>
-        const API_KEY = "cok_gizli_sifren_2026";   // ← Plugin'deki ApiKey ile AYNI olsun!
-        const HOST = "atommod.mcsunucun.com";
-        const PORT = 29076;
+        async function getPermission() {
+            return Number(sessionStorage.getItem('atommod_permission') || localStorage.getItem('atommod_permission') || 0);
+        }
 
-        async function gonderKomut() {
-            const cmdInput = document.getElementById("komut").value.trim();
-            const sonucDiv = document.getElementById("sonuc");
+        window.addEventListener('load', async () => {
+            const perm = await getPermission();
+            const infoEl = document.getElementById('permissionInfo');
 
-            if (!cmdInput) {
-                sonucDiv.innerHTML = "<span style='color:red'>Komut boş olamaz!</span>";
+            if (perm >= 5) {
+                infoEl.style.color = '#0f0';
+                infoEl.innerHTML = `✅ Yetki: <strong>${perm}</strong> — TCP Komut aktif`;
+            } else {
+                infoEl.style.color = '#ff4444';
+                infoEl.innerHTML = `❌ Yetki yetersiz (${perm})`;
+                document.getElementById('sendBtn').disabled = true;
                 return;
             }
 
-            const encodedCmd = encodeURIComponent(cmdInput);
-            const url = `http://${HOST}:${PORT}/command/?key=${API_KEY}&cmd=${encodedCmd}`;
+            document.getElementById('sendBtn').addEventListener('click', async () => {
+                const cmd = document.getElementById('commandSelect').value;
+                const args = document.getElementById('commandArgs').value.trim();
+                const fullCommand = args ? `${cmd} ${args}` : cmd;
 
-            sonucDiv.innerHTML = "Gönderiliyor...";
+                const resultBox = document.getElementById('result');
+                resultBox.className = 'result';
+                resultBox.textContent = 'Komut TCP üzerinden gönderiliyor...';
 
-            try {
-                const response = await fetch(url, { 
-                    method: "GET",
-                    mode: "cors"   // Hosting izin verirse
-                });
+                try {
+                    // Senin mevcut TCP listener'ına (RemoteAdminConsole) bağlanıyoruz
+                    const res = await fetch('https://atommod.mcsunucun.com:29075', {   // Portu kendi portunla değiştir
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: fullCommand
+                    });
 
-                const text = await response.text();
+                    const text = await res.text();
 
-                if (response.ok) {
-                    sonucDiv.innerHTML = `<span style='color:lime'>✅ Başarılı!</span><br><br>${text.replace(/\n/g, '<br>')}`;
-                } else {
-                    sonucDiv.innerHTML = `<span style='color:red'>❌ Hata (${response.status}):</span><br>${text}`;
+                    if (res.ok) {
+                        resultBox.className = 'result success';
+                        resultBox.textContent = `✅ Komut gönderildi!\n${text}`;
+                    } else {
+                        resultBox.className = 'result error';
+                        resultBox.textContent = `❌ Hata: ${text}`;
+                    }
+                } catch (err) {
+                    resultBox.className = 'result error';
+                    resultBox.textContent = `❌ Bağlantı hatası\nSunucu TCP listener'ı çalışmıyor olabilir.\n\nKomut: ${fullCommand}`;
                 }
-            } catch (err) {
-                sonucDiv.innerHTML = `<span style='color:red'>❌ Bağlantı hatası:</span><br>${err.message}<br><br><small>Sunucu IP/port kapalı olabilir veya firewall engelliyor.</small>`;
-            }
-        }
-
-        // Enter tuşu ile de gönderebilmek için
-        document.getElementById("komut").addEventListener("keypress", function(e) {
-            if (e.key === "Enter") gonderKomut();
+            });
         });
     </script>
 </body>
