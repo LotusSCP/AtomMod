@@ -1,106 +1,64 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>AtomMod - SagaNetwork Komut Paneli</title>
+    <meta charset="UTF-8">
+    <title>SCPSL Komut Paneli</title>
     <style>
-        body { background: #0a0a0a; color: #ddd; font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: 40px auto; padding: 30px; background: #111; border-radius: 12px; border: 2px solid #0f0; }
-        label { display: block; margin: 15px 0 8px; font-weight: bold; color: #0f0; }
-        select, input { width: 100%; padding: 14px; background: #1e1e1e; color: white; border: 1px solid #0f0; border-radius: 6px; font-size: 16px; }
-        button { width: 100%; padding: 18px; margin-top: 25px; background: #0f0; color: black; border: none; border-radius: 8px; font-size: 19px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #0c0; }
-        .result { margin-top: 25px; padding: 18px; border-radius: 8px; min-height: 120px; white-space: pre-wrap; }
-        .success { background: #002200; color: #0f0; }
-        .error { background: #220000; color: #ff6666; }
+        body { font-family: Arial; background: #1e1e1e; color: #fff; padding: 20px; }
+        input, button { padding: 10px; font-size: 16px; margin: 5px; }
+        button { background: #0066ff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0055dd; }
+        #sonuc { margin-top: 20px; white-space: pre-wrap; background: #333; padding: 15px; border-radius: 5px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📡 SagaNetwork Komut Paneli</h1>
-        <p id="permissionInfo" style="text-align:center; font-size:20px; margin:20px 0;"></p>
+    <h2>SCPSL Sunucu Komut Paneli</h2>
+    
+    <input type="text" id="komut" placeholder="broadcast Merhaba Dünya" style="width: 400px;">
+    <button onclick="gonderKomut()">Komut Gönder</button>
 
-        <label>Komut Türü:</label>
-        <select id="commandSelect">
-            <option value="broadcast">Broadcast Mesajı</option>
-            <option value="bc">Kısa Broadcast</option>
-            <option value="roundrestart">Round Restart</option>
-            <option value="cassie">Cassie Mesajı</option>
-            <option value="nuke">Nuke Başlat</option>
-            <option value="stopnuke">Nuke Durdur</option>
-            <option value="kick">Kick Oyuncu</option>
-        </select>
-
-        <label>Argüman / Mesaj:</label>
-        <input type="text" id="commandArgs" placeholder="Mesaj veya argüman yazın...">
-
-        <button id="sendBtn">🚀 Komutu Gönder</button>
-
-        <div id="result" class="result"></div>
-    </div>
-
-    <script src="supabase.js"></script>
-    <script src="app.js"></script>
+    <div id="sonuc"></div>
 
     <script>
-        const SERVER_UUID = "43ef2206-a5ff-4ff8-bfd5-9ac16a5dc11e";
-        const PANEL_API = "https://panel.saganetwork.net/api/client/servers/" + SERVER_UUID + "/command";
+        const API_KEY = "cok_gizli_sifren_2026";   // ← Plugin'deki ApiKey ile AYNI olsun!
+        const HOST = "atommod.mcsunucun.com";
+        const PORT = 29076;
 
-        async function getPermission() {
-            return Number(sessionStorage.getItem('atommod_permission') || localStorage.getItem('atommod_permission') || 0);
-        }
+        async function gonderKomut() {
+            const cmdInput = document.getElementById("komut").value.trim();
+            const sonucDiv = document.getElementById("sonuc");
 
-        window.addEventListener('load', async () => {
-            const perm = await getPermission();
-            const infoEl = document.getElementById('permissionInfo');
-
-            if (perm >= 5) {
-                infoEl.style.color = '#0f0';
-                infoEl.innerHTML = `✅ Yetki: <strong>${perm}</strong> — Komut gönderme aktif`;
-            } else {
-                infoEl.style.color = '#ff4444';
-                infoEl.innerHTML = `❌ Yetki yetersiz (${perm})`;
-                document.getElementById('sendBtn').disabled = true;
+            if (!cmdInput) {
+                sonucDiv.innerHTML = "<span style='color:red'>Komut boş olamaz!</span>";
                 return;
             }
 
-            document.getElementById('sendBtn').addEventListener('click', async () => {
-                const cmd = document.getElementById('commandSelect').value;
-                const args = document.getElementById('commandArgs').value.trim();
-                const fullCommand = args ? `${cmd} ${args}` : cmd;
+            const encodedCmd = encodeURIComponent(cmdInput);
+            const url = `http://${HOST}:${PORT}/command/?key=${API_KEY}&cmd=${encodedCmd}`;
 
-                const resultBox = document.getElementById('result');
-                resultBox.className = 'result';
-                resultBox.textContent = 'Komut gönderiliyor...';
+            sonucDiv.innerHTML = "Gönderiliyor...";
 
-                try {
-                    // Not: CORS sorunu devam ederse bu kısım çalışmayabilir
-                    const res = await fetch(PANEL_API, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            // Authorization: Bearer {API_KEY}  <-- Eğer API Key'in varsa buraya ekle
-                        },
-                        body: JSON.stringify({
-                            command: fullCommand
-                        }),
-                        credentials: 'include'   // Cookie ile deneme
-                    });
+            try {
+                const response = await fetch(url, { 
+                    method: "GET",
+                    mode: "cors"   // Hosting izin verirse
+                });
 
-                    if (res.ok) {
-                        resultBox.className = 'result success';
-                        resultBox.textContent = `✅ Komut gönderildi: ${fullCommand}`;
-                    } else {
-                        resultBox.className = 'result error';
-                        resultBox.textContent = `❌ Hata: ${res.status} - ${res.statusText}`;
-                    }
-                } catch (err) {
-                    resultBox.className = 'result error';
-                    resultBox.textContent = `❌ Bağlantı hatası (CORS): ${err.message}\n\nNot: SagaNetwork paneli CORS izni vermiyor.`;
+                const text = await response.text();
+
+                if (response.ok) {
+                    sonucDiv.innerHTML = `<span style='color:lime'>✅ Başarılı!</span><br><br>${text.replace(/\n/g, '<br>')}`;
+                } else {
+                    sonucDiv.innerHTML = `<span style='color:red'>❌ Hata (${response.status}):</span><br>${text}`;
                 }
-            });
+            } catch (err) {
+                sonucDiv.innerHTML = `<span style='color:red'>❌ Bağlantı hatası:</span><br>${err.message}<br><br><small>Sunucu IP/port kapalı olabilir veya firewall engelliyor.</small>`;
+            }
+        }
+
+        // Enter tuşu ile de gönderebilmek için
+        document.getElementById("komut").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") gonderKomut();
         });
     </script>
 </body>
