@@ -63,37 +63,38 @@
                 return;
             }
 
-            document.getElementById('sendBtn').addEventListener('click', async () => {
-                const cmd = document.getElementById('commandSelect').value;
-                const args = document.getElementById('commandArgs').value.trim();
-                const fullCommand = args ? `${cmd} ${args}` : cmd;
+document.getElementById('sendBtn').addEventListener('click', async () => {
+    const cmdType = document.getElementById('commandSelect').value;
+    const args = document.getElementById('commandArgs').value.trim();
+    const fullCommand = args ? `${cmdType} ${args}` : cmdType;
 
-                const resultBox = document.getElementById('result');
-                resultBox.className = 'result';
-                resultBox.textContent = 'Komut TCP üzerinden gönderiliyor...';
+    const resultBox = document.getElementById('result');
+    resultBox.className = 'result';
+    resultBox.textContent = 'Komut gönderiliyor...';
 
-                try {
-                    // Senin mevcut TCP listener'ına (RemoteAdminConsole) bağlanıyoruz
-                    const res = await fetch('https://atommod.mcsunucun.com:29075', {   // Portu kendi portunla değiştir
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain' },
-                        body: fullCommand
-                    });
+    const API_KEY = "cok_gizli_sifrenizi_buraya_yazin";   // Plugin'dekiyle AYNI olsun!
+    const PORT = 29076;   // Yukarıda belirlediğin port
 
-                    const text = await res.text();
+    const encodedCmd = encodeURIComponent(fullCommand);
+    const url = `http://atommod.mcsunucun.com:${PORT}/command/?key=${API_KEY}&cmd=${encodedCmd}`;
 
-                    if (res.ok) {
-                        resultBox.className = 'result success';
-                        resultBox.textContent = `✅ Komut gönderildi!\n${text}`;
-                    } else {
-                        resultBox.className = 'result error';
-                        resultBox.textContent = `❌ Hata: ${text}`;
-                    }
-                } catch (err) {
-                    resultBox.className = 'result error';
-                    resultBox.textContent = `❌ Bağlantı hatası\nSunucu TCP listener'ı çalışmıyor olabilir.\n\nKomut: ${fullCommand}`;
-                }
-            });
+    try {
+        const res = await fetch(url, { method: 'GET' });
+
+        const text = await res.text();
+
+        if (res.ok) {
+            resultBox.className = 'result success';
+            resultBox.textContent = text;
+        } else {
+            resultBox.className = 'result error';
+            resultBox.textContent = `❌ Hata (${res.status}): ${text}`;
+        }
+    } catch (err) {
+        resultBox.className = 'result error';
+        resultBox.textContent = `❌ Bağlantı hatası\nPort ${PORT} kapalı olabilir.\nSagaNetwork panelinden port açmayı dene.\n\nHata: ${err.message}`;
+    }
+});
         });
     </script>
 </body>
