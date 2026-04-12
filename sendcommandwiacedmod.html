@@ -3,22 +3,48 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>AtomMod - Pterodactyl WebSocket</title>
+    <title>AtomMod - SagaNetwork Komut Paneli</title>
     <style>
         body { background: #0a0a0a; color: #ddd; font-family: Arial, sans-serif; margin: 0; padding: 20px; }
         .container { max-width: 900px; margin: 40px auto; padding: 30px; background: #111; border-radius: 12px; border: 2px solid #0f0; }
         label { display: block; margin: 15px 0 8px; font-weight: bold; color: #0f0; }
-        select, input { width: 100%; padding: 14px; background: #1e1e1e; color: white; border: 1px solid #0f0; border-radius: 6px; font-size: 16px; }
-        button { width: 100%; padding: 18px; margin-top: 25px; background: #0f0; color: black; border: none; border-radius: 8px; font-size: 19px; cursor: pointer; font-weight: bold; }
+        select, input { 
+            width: 100%; 
+            padding: 14px; 
+            background: #1e1e1e; 
+            color: white; 
+            border: 1px solid #0f0; 
+            border-radius: 6px; 
+            font-size: 16px; 
+        }
+        button { 
+            width: 100%; 
+            padding: 18px; 
+            margin-top: 25px; 
+            background: #0f0; 
+            color: black; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 19px; 
+            cursor: pointer; 
+            font-weight: bold;
+        }
         button:hover { background: #0c0; }
-        .result { margin-top: 25px; padding: 18px; border-radius: 8px; min-height: 120px; white-space: pre-wrap; font-size: 15px; }
+        .result { 
+            margin-top: 25px; 
+            padding: 18px; 
+            border-radius: 8px; 
+            min-height: 130px; 
+            white-space: pre-wrap; 
+            font-size: 15px; 
+        }
         .success { background: #002200; color: #0f0; }
         .error { background: #220000; color: #ff6666; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔌 Pterodactyl WebSocket Komut Paneli</h1>
+        <h1>🔧 SagaNetwork Komut Paneli</h1>
         <p id="permissionInfo" style="text-align:center; font-size:20px; margin:20px 0;"></p>
 
         <label>Komut Türü:</label>
@@ -35,7 +61,7 @@
         <label>Argüman / Mesaj:</label>
         <input type="text" id="commandArgs" placeholder="Mesaj veya argüman yazın...">
 
-        <button id="sendBtn">🚀 Komutu Gönder (WebSocket)</button>
+        <button id="sendBtn">🚀 Komutu Gönder</button>
 
         <div id="result" class="result"></div>
     </div>
@@ -44,42 +70,15 @@
     <script src="app.js"></script>
 
     <script>
-        const WS_URL = "s5.saganetwork.net:8080/api/servers/43ef2206-a5ff-4ff8-bfd5-9ac16a5dc11e/ws";
-        const AUTH_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImp0aSI6IjdlOGMzOTExZjI2NmQ4ODg0YWM0NjczMjU3NzRjOGZjIn0.eyJpc3MiOiJodHRwczovL3BhbmVsLnNhZ2FuZXR3b3JrLm5ldCIsImF1ZCI6WyJodHRwczovL3M1LnNhZ2FuZXR3b3JrLm5ldDo4MDgwIl0sImp0aSI6IjdlOGMzOTExZjI2NmQ4ODg0YWM0NjczMjU3NzRjOGZjIiwiaWF0IjoxNzc1NTc1MTgwLCJuYmYiOjE3NzU1NzQ4ODAsImV4cCI6MTc3NTU3NTc4MCwic2VydmVyX3V1aWQiOiI0M2VmMjIwNi1hNWZmLTRmZjgtYmZkNS05YWMxNmE1ZGMxMWUiLCJwZXJtaXNzaW9ucyI6WyJzdWJkb21haW4ubWFuYWdlIiwicGxheWVybWFuYWdlci5tYW5hZ2UiLCJjb25maWcubWFuYWdlIiwiY29udHJvbC5jb25zb2xlIiwiY29udHJvbC5zdGFydCIsImNvbnRyb2wuc3RvcCIsImNvbnRyb2wucmVzdGFydCIsInVzZXIuY3JlYXRlIiwidXNlci5yZWFkIiwidXNlci51cGRhdGUiLCJ1c2VyLmRlbGV0ZSIsImZpbGUuY3JlYXRlIiwiZmlsZS5yZWFkIiwiZmlsZS5yZWFkLWNvbnRlbnQiLCJmaWxlLnVwZGF0ZSIsImZpbGUuZGVsZXRlIiwiZmlsZS5hcmNoaXZlIiwiZmlsZS5zZnRwIiwiYmFja3VwLmNyZWF0ZSIsImJhY2t1cC5yZWFkIiwiYmFja3VwLmRlbGV0ZSIsImJhY2t1cC5kb3dubG9hZCIsImJhY2t1cC5yZXN0b3JlIiwiYWxsb2NhdGlvbi5yZWFkIiwiYWxsb2NhdGlvbi5jcmVhdGUiLCJhbGxvY2F0aW9uLnVwZGF0ZSIsImFsbG9jYXRpb24uZGVsZXRlIiwic3RhcnR1cC5yZWFkIiwic3RhcnR1cC51cGRhdGUiLCJzdGFydHVwLmRvY2tlci1pbWFnZSIsImRhdGFiYXNlLmNyZWF0ZSIsImRhdGFiYXNlLnJlYWQiLCJkYXRhYmFzZS51cGRhdGUiLCJkYXRhYmFzZS5kZWxldGUiLCJkYXRhYmFzZS52aWV3X3Bhc3N3b3JkIiwic2NoZWR1bGUuY3JlYXRlIiwic2NoZWR1bGUucmVhZCIsInNjaGVkdWxlLnVwZGF0ZSIsInNjaGVkdWxlLmRlbGV0ZSIsInNldHRpbmdzLnJlbmFtZSIsInNldHRpbmdzLnJlaW5zdGFsbCIsImFjdGl2aXR5LnJlYWQiLCJ3ZWJzb2NrZXQuY29ubmVjdCJdLCJ1c2VyX3V1aWQiOiI0ZDg5Njg0OC1lZjY2LTRkZDUtYjFjNS1iZThlMDc2NTI1MGUiLCJ1c2VyX2lkIjoxNDU2OCwidW5pcXVlX2lkIjoid2E5VU85R2hoMGpIblFhUCJ9.HFtKc7W96uGtymsUxXIqk6RbiNK_XZg9ZIS9kUuvDhg";
-
-        let socket = null;
+        // Senin sunucu UUID'n
+        const SERVER_UUID = "43ef2206-a5ff-4ff8-bfd5-9ac16a5dc11e";
+        const PANEL_API = `https://panel.saganetwork.net/api/client/servers/${SERVER_UUID}/command`;
 
         async function getPermission() {
-            return Number(sessionStorage.getItem('atommod_permission') || localStorage.getItem('atommod_permission') || 0);
-        }
-
-        function connectWebSocket() {
-            socket = new WebSocket(WS_URL);
-
-            socket.onopen = () => {
-                console.log("WebSocket bağlandı");
-                // Auth token gönder
-                socket.send(JSON.stringify({
-                    event: "auth",
-                    args: [AUTH_TOKEN]
-                }));
-                document.getElementById('result').innerHTML = "✅ WebSocket bağlantısı kuruldu ve auth yapıldı.";
-            };
-
-            socket.onmessage = (event) => {
-                const resultBox = document.getElementById('result');
-                resultBox.className = 'result success';
-                resultBox.textContent = "📥 Sunucudan cevap: " + event.data;
-            };
-
-            socket.onerror = (err) => {
-                document.getElementById('result').innerHTML = "❌ WebSocket hatası oluştu";
-                console.error(err);
-            };
-
-            socket.onclose = () => {
-                console.log("WebSocket kapandı");
-            };
+            // Login sonrası kaydedilen yetkiyi oku
+            let perm = Number(sessionStorage.getItem('atommod_permission'));
+            if (!perm) perm = Number(localStorage.getItem('atommod_permission'));
+            return perm || 0;
         }
 
         window.addEventListener('load', async () => {
@@ -87,31 +86,51 @@
             const infoEl = document.getElementById('permissionInfo');
 
             if (perm >= 5) {
-                infoEl.innerHTML = `✅ Yetki: <strong>${perm}</strong> — WebSocket aktif`;
+                infoEl.style.color = '#0f0';
+                infoEl.innerHTML = `✅ Yetki: <strong>${perm}</strong> — Komut gönderme aktif`;
             } else {
+                infoEl.style.color = '#ff4444';
                 infoEl.innerHTML = `❌ Yetki yetersiz (${perm})`;
                 document.getElementById('sendBtn').disabled = true;
                 return;
             }
 
-            connectWebSocket();
-
-            document.getElementById('sendBtn').addEventListener('click', () => {
-                if (!socket || socket.readyState !== WebSocket.OPEN) {
-                    alert("WebSocket bağlı değil!");
-                    return;
-                }
-
+            // Komut Gönderme Butonu
+            document.getElementById('sendBtn').addEventListener('click', async () => {
                 const cmd = document.getElementById('commandSelect').value;
                 const args = document.getElementById('commandArgs').value.trim();
                 const fullCommand = args ? `${cmd} ${args}` : cmd;
 
-                socket.send(JSON.stringify({
-                    event: "send command",
-                    args: [fullCommand]
-                }));
+                const resultBox = document.getElementById('result');
+                resultBox.className = 'result';
+                resultBox.textContent = 'Komut gönderiliyor...';
 
-                document.getElementById('result').innerHTML = `📤 Gönderildi: ${fullCommand}`;
+                try {
+                    const response = await fetch(PANEL_API, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',   // Panel cookie'sini kullan
+                        body: JSON.stringify({
+                            command: fullCommand
+                        })
+                    });
+
+                    let text = await response.text();
+
+                    if (response.ok) {
+                        resultBox.className = 'result success';
+                        resultBox.textContent = `✅ Komut gönderildi!\n\nKomut: ${fullCommand}\n\nCevap: ${text || "Başarılı"}`;
+                    } else {
+                        resultBox.className = 'result error';
+                        resultBox.textContent = `❌ Hata (${response.status})\n${text}`;
+                    }
+                } catch (err) {
+                    resultBox.className = 'result error';
+                    resultBox.textContent = `❌ Bağlantı hatası:\n${err.message}\n\n(Not: CORS veya oturum sorunu olabilir)`;
+                }
             });
         });
     </script>
