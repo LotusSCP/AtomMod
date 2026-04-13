@@ -18,29 +18,17 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔧 Uzaktan Komut Paneli (TCP)</h1>
-        <p id="permissionInfo" style="text-align:center; font-size:20px; margin:20px 0;"></p>
+    <h1>🔧 AtomMod Uzaktan Komut Paneli</h1>
+    <p id="permissionInfo" style="text-align:center; font-size:20px; margin:20px 0;"></p>
 
-        <label>Komut Türü:</label>
-        <select id="commandSelect">
-            <option value="broadcast">Broadcast</option>
-            <option value="bc">Kısa Broadcast</option>
-            <option value="roundrestart">Round Restart</option>
-            <option value="cassie">Cassie</option>
-            <option value="nuke">Nuke</option>
-            <option value="stopnuke">Nuke Durdur</option>
-            <option value="kick">Kick</option>
-            <option value="raw">Raw Komut</option>
-        </select>
+    <label>Komut:</label>
+    <input type="text" id="commandArgs" placeholder="Örn: broadcast Merhaba, roundrestart, cassie Mesaj..." style="width: 100%; padding: 14px; font-size: 16px;" autofocus>
 
-        <label>Argüman / Mesaj:</label>
-        <input type="text" id="commandArgs" placeholder="Mesaj veya argüman...">
+    <button id="sendBtn">🚀 Komutu Gönder</button>
 
-        <button id="sendBtn">🚀 Komutu Gönder (TCP)</button>
-
-        <div id="result" class="result"></div>
-    </div>
-
+    <div id="result" class="result"></div>
+</div>
+    
     <script src="supabase.js"></script>
     <script src="app.js"></script>
 
@@ -63,52 +51,69 @@
                 return;
             }
 
-document.getElementById('sendBtn').addEventListener('click', async () => {
-    const cmdType = document.getElementById('commandSelect').value;
-    const args = document.getElementById('commandArgs').value.trim();
-    const fullCommand = args ? `${cmdType} ${args}` : cmdType;
+<script>
+    document.getElementById('sendBtn').addEventListener('click', async () => {
+        let fullCommand = document.getElementById('commandArgs').value.trim();
 
-    const resultBox = document.getElementById('result');
-    resultBox.className = 'result';
-    resultBox.textContent = 'Komut gönderiliyor...';
-
-    // ====================== BİLGİLER ======================
-    const PANEL_URL = "https://panel.saganetwork.net";
-    const SERVER_ID = "43ef2206-a5ff-4ff8-bfd5-9ac16a5dc11e";
-    const API_KEY   = "ptlc_YsIfuDZimR2TLQcXqjfVnxtLmBuNTlmHcqYXE5TTtI9";
-    // =====================================================
-
-    const url = `${PANEL_URL}/api/client/servers/${SERVER_ID}/command`;
-
-    try {
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${API_KEY}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ 
-                command: fullCommand 
-            })
-        });
-
-        if (res.ok || res.status === 204) {
-            resultBox.className = 'result success';
-            resultBox.innerHTML = `✅ <strong>Komut başarıyla gönderildi!</strong><br><br>${fullCommand}`;
-        } 
-        else {
-            const errorText = await res.text().catch(() => "");
-            resultBox.className = 'result error';
-            resultBox.innerHTML = `❌ <strong>Hata (${res.status})</strong><br>${errorText || "Bilinmeyen hata"}`;
+        if (!fullCommand) {
+            alert("Lütfen bir komut yazın!");
+            return;
         }
-    } 
-    catch (err) {
-        resultBox.className = 'result error';
-        resultBox.innerHTML = `❌ <strong>Bağlantı Hatası</strong><br>${err.message}<br><br>API Key veya IP kısıtlaması kontrol edin.`;
-    }
-});
-        });
-    </script>
+
+        const resultBox = document.getElementById('result');
+        resultBox.className = 'result';
+        resultBox.innerHTML = '🔄 Komut gönderiliyor...';
+
+        const PANEL_URL = "https://panel.saganetwork.net";
+        const SERVER_ID = "43ef2206-a5ff-4ff8-bfd5-9ac16a5dc11e";
+        const API_KEY   = "ptlc_YsIfuDZimR2TLQcXqjfVnxtLmBuNTlmHcqYXE5TTtI9";
+
+        try {
+            const res = await fetch(`${PANEL_URL}/api/client/servers/${SERVER_ID}/command`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ command: fullCommand })
+            });
+
+            if (res.ok || res.status === 204) {
+                resultBox.className = 'result success';
+                resultBox.innerHTML = `
+                    ✅ <strong>Komut başarıyla gönderildi!</strong><br><br>
+                    <strong>Gönderilen Komut:</strong><br>
+                    <code>${fullCommand}</code><br><br>
+                    <strong>Konsol Log:</strong><br>
+                    Komut Pterodactyl API tarafından kabul edildi.<br>
+                    Detaylı sonucu sunucu konsolundan kontrol edebilirsiniz.
+                `;
+            } else {
+                const errorText = await res.text().catch(() => "Bilinmeyen hata");
+                resultBox.className = 'result error';
+                resultBox.innerHTML = `
+                    ❌ <strong>Hata (${res.status})</strong><br><br>
+                    Komut: <code>${fullCommand}</code><br>
+                    ${errorText || "Sunucu tarafında hata oluştu."}
+                `;
+            }
+        } catch (err) {
+            resultBox.className = 'result error';
+            resultBox.innerHTML = `
+                ❌ <strong>Bağlantı Hatası</strong><br><br>
+                ${err.message}<br><br>
+                .exe dosyasını yönetici olarak çalıştırdığınızdan emin olun.
+            `;
+        }
+    });
+
+    // Enter tuşu ile gönderme
+    document.getElementById('commandArgs').addEventListener('keypress', function(e) {
+        if (e.key === "Enter") {
+            document.getElementById('sendBtn').click();
+        }
+    });
+</script>
 </body>
 </html>
