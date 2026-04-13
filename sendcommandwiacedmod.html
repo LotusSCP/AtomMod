@@ -3,11 +3,11 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>AtomMod - Uzaktan Komut Paneli</title>
+    <title>AtomMod - SagaNetwork Komut Paneli</title>
     <style>
-        body { background: #0a0a0a; color: #ddd; font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: 40px auto; padding: 30px; background: #111; border-radius: 12px; border: 2px solid #0f0; }
-        h1 { text-align: center; color: #0f0; }
+        body { background: #0a0a0a; color: #ddd; font-family: 'Roboto', Arial, sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 950px; margin: 40px auto; padding: 30px; background: #111; border-radius: 12px; border: 3px solid #0f0; }
+        h1 { text-align: center; color: #0f0; margin-bottom: 10px; }
         .permission { text-align: center; font-size: 20px; margin: 20px 0; padding: 12px; border-radius: 8px; }
         .toggle-btn { 
             display: block; 
@@ -42,25 +42,24 @@
         .cmd:hover { background: #0f0; color: black; }
         label { display: block; margin: 15px 0 8px; font-weight: bold; color: #0f0; }
         input { width: 100%; padding: 14px; background: #1e1e1e; color: white; border: 1px solid #0f0; border-radius: 6px; font-size: 16px; }
-        button { width: 100%; padding: 16px; margin-top: 20px; background: #0f0; color: black; border: none; border-radius: 8px; font-size: 19px; cursor: pointer; font-weight: bold; }
+        button { width: 100%; padding: 16px; margin-top: 25px; background: #0f0; color: black; border: none; border-radius: 8px; font-size: 19px; cursor: pointer; font-weight: bold; }
         button:hover { background: #0c0; }
-        .result { margin-top: 25px; padding: 18px; border-radius: 8px; min-height: 100px; white-space: pre-wrap; }
+        .result { margin-top: 25px; padding: 18px; border-radius: 8px; min-height: 120px; white-space: pre-wrap; }
         .success { background: #002200; color: #0f0; }
         .error { background: #220000; color: #ff6666; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔧 AtomMod Uzaktan Komut Paneli</h1>
+        <h1>🔧 SagaNetwork Uzaktan Komut Paneli</h1>
         <p id="permissionInfo" class="permission"></p>
 
         <!-- Toggle Butonu -->
-        <button class="toggle-btn" id="toggleBtn">📋 Tüm Komutları Göster / Gizle</button>
+        <button class="toggle-btn" id="toggleBtn">📋 SagaNetwork Komutlarını Göster / Gizle</button>
 
         <!-- Komut Listesi -->
         <div id="commandsSection" class="commands-section">
 
-            <!-- Remote Admin Komutları -->
             <div class="category">
                 <h3>🔹 Remote Admin Komutları (Prefix: /)</h3>
                 <div class="cmd" onclick="useCommand('/broadcast Merhaba Sunucu!')">/broadcast</div>
@@ -75,7 +74,6 @@
                 <div class="cmd" onclick="useCommand('/noclip')">/noclip</div>
             </div>
 
-            <!-- Sunucu Komutları -->
             <div class="category">
                 <h3>🔸 Sunucu Komutları (Prefix: boş)</h3>
                 <div class="cmd" onclick="useCommand('restart')">restart</div>
@@ -89,7 +87,6 @@
                 <div class="cmd" onclick="useCommand('roundrestart')">roundrestart</div>
             </div>
 
-            <!-- Client Komutları -->
             <div class="category">
                 <h3>🔹 Client Komutları (Prefix: .)</h3>
                 <div class="cmd" onclick="useCommand('.help')">.help</div>
@@ -99,7 +96,6 @@
                 <div class="cmd" onclick="useCommand('.godmode')">.godmode</div>
                 <div class="cmd" onclick="useCommand('.ctnoclip')">.ctnoclip</div>
                 <div class="cmd" onclick="useCommand('.redbull')">.redbull</div>
-                <div class="cmd" onclick="useCommand('.carryragdoll')">.carryragdoll</div>
             </div>
         </div>
 
@@ -125,11 +121,9 @@
             section.style.display = (section.style.display === 'block') ? 'none' : 'block';
         });
 
-        // Komutu input kutusuna yaz
+        // Komutu input'a yaz
         function useCommand(cmd) {
             document.getElementById('commandArgs').value = cmd;
-            // Opsiyonel: komut listesini kapat
-            // document.getElementById('commandsSection').style.display = 'none';
         }
 
         window.addEventListener('load', async () => {
@@ -139,7 +133,7 @@
             if (perm >= 5) {
                 infoEl.style.background = '#002200';
                 infoEl.style.color = '#0f0';
-                infoEl.innerHTML = `✅ Yetki: <strong>${perm}</strong> — Komut gönderme aktif`;
+                infoEl.innerHTML = `✅ Yetki: <strong>${perm}</strong> — SagaNetwork komutları aktif`;
             } else {
                 infoEl.style.background = '#220000';
                 infoEl.style.color = '#ff6666';
