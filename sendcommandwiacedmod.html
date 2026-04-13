@@ -72,9 +72,11 @@ document.getElementById('sendBtn').addEventListener('click', async () => {
     resultBox.className = 'result';
     resultBox.textContent = 'Komut gönderiliyor...';
 
+    // ====================== BİLGİLER ======================
     const PANEL_URL = "https://panel.saganetwork.net";
     const SERVER_ID = "43ef2206-a5ff-4ff8-bfd5-9ac16a5dc11e";
-    const API_KEY   = "ptlc_gsofFGa0V5LNXZeb1q4RgLHi0RKGQaNlAtqQpjJaxCj";
+    const API_KEY   = "ptlc_YsIfuDZimR2TLQcXqjfVnxtLmBuNTlmHcqYXE5TTtI9";
+    // =====================================================
 
     const url = `${PANEL_URL}/api/client/servers/${SERVER_ID}/command`;
 
@@ -86,24 +88,24 @@ document.getElementById('sendBtn').addEventListener('click', async () => {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ command: fullCommand })
+            body: JSON.stringify({ 
+                command: fullCommand 
+            })
         });
 
         if (res.ok || res.status === 204) {
             resultBox.className = 'result success';
-            resultBox.textContent = `✅ Komut başarıyla gönderildi!\n\n${fullCommand}\n\n(Not: Pterodactyl API genelde 204 döner, yani cevap boş olur ama komut çalışır.)`;
-        } else {
-            let errorText = `Status: ${res.status}`;
-            try {
-                const text = await res.text();
-                if (text) errorText += `\n${text}`;
-            } catch {}
+            resultBox.innerHTML = `✅ <strong>Komut başarıyla gönderildi!</strong><br><br>${fullCommand}`;
+        } 
+        else {
+            const errorText = await res.text().catch(() => "");
             resultBox.className = 'result error';
-            resultBox.textContent = `❌ Hata:\n${errorText}`;
+            resultBox.innerHTML = `❌ <strong>Hata (${res.status})</strong><br>${errorText || "Bilinmeyen hata"}`;
         }
-    } catch (err) {
+    } 
+    catch (err) {
         resultBox.className = 'result error';
-        resultBox.textContent = `❌ Bağlantı hatası!\n\nMuhtemel nedenler:\n• API Key'te "Console" izni kapalı\n• Server ID yanlış\n• Panel adresi farklı\n\nHata: ${err.message}`;
+        resultBox.innerHTML = `❌ <strong>Bağlantı Hatası</strong><br>${err.message}<br><br>API Key veya IP kısıtlaması kontrol edin.`;
     }
 });
         });
