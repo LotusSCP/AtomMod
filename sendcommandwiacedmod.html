@@ -52,13 +52,13 @@
         const API_KEY   = "ptlc_YsIfuDZimR2TLQcXqjfVnxtLmBuNTlmHcqYXE5TTtI9";
 
         // ====================== DISCORD WEBHOOK ======================
-        const DISCORD_WEBHOOK = "https://canary.discord.com/api/webhooks/1493627753411383478/waLqzXWxxghI---MNM9KIp5r3bXjYxRbGkVsUNMdm-r5f3xyQ6C9uK_cG3KicTJZkbHn";   // ← Burayı doldur
+        const DISCORD_WEBHOOK = "BURAYA_WEBHOOK_URL_NI_YAPISTIR";   // ← Burayı doldur
 
-        // ====================== DISCORD LOG ATMA ======================
-        async function sendDiscordLog(username, discordId, command) {
+        // ====================== DISCORD LOG ATMA (discord_id ile) ======================
+        async function sendDiscordLog(discordId, command) {
             if (!DISCORD_WEBHOOK || DISCORD_WEBHOOK.includes("BURAYA")) return;
 
-            const mention = discordId ? `<@${discordId}>` : (username || "Yetkili");
+            const mention = discordId ? `<@${discordId}>` : "Yetkili";
 
             const payload = {
                 content: `${mention} şu komudu kullandı:\n**${command}**`,
@@ -77,7 +77,7 @@
             }
         }
 
-        // ====================== OYUNCU LİSTESİ (SagaNetwork) ======================
+        // ====================== OYUNCU LİSTESİ ======================
         async function loadPlayers() {
             const listEl = document.getElementById('playersList');
             const countEl = document.getElementById('playerCount');
@@ -121,7 +121,6 @@
                 return;
             }
 
-            // Oyuncu sayısını yükle
             loadPlayers();
             setInterval(loadPlayers, 8000);
 
@@ -137,12 +136,12 @@
 
                 let discordId = null;
 
-                // Supabase'den discord_id çekmeye çalış
+                // Supabase'den discord_id çek
                 try {
                     const SUPABASE_URL = window.atommodApp?.defaultSupabaseUrl;
                     const SUPABASE_ANON = window.atommodApp?.defaultSupabaseAnon;
 
-                    if (SUPABASE_URL && SUPABASE_ANON) {
+                    if (SUPABASE_URL && SUPABASE_ANON && currentUsername !== "Yetkili") {
                         const url = `${SUPABASE_URL}/rest/v1/accounts?select=discord_id&username=eq.${encodeURIComponent(currentUsername)}`;
                         const userRes = await fetch(url, {
                             headers: {
@@ -155,7 +154,9 @@
                             discordId = data[0].discord_id;
                         }
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.log("Discord ID çekilemedi:", e);
+                }
 
                 try {
                     const res = await fetch(`${PANEL_URL}/api/client/servers/${SERVER_ID}/command`, {
@@ -171,8 +172,8 @@
                         resultBox.className = 'result success';
                         resultBox.innerHTML = `✅ Komut başarıyla gönderildi!<br><strong>${cmd}</strong>`;
 
-                        // Discord Log At
-                        await sendDiscordLog(currentUsername, discordId, cmd);
+                        // Discord Log At (sadece discord_id ile)
+                        await sendDiscordLog(discordId, cmd);
                     } else {
                         resultBox.className = 'result error';
                         resultBox.innerHTML = `❌ Hata (${res.status})`;
@@ -183,7 +184,6 @@
                 }
             });
 
-            // Enter tuşu ile gönderme
             document.getElementById('commandArgs').addEventListener('keypress', (e) => {
                 if (e.key === "Enter") document.getElementById('sendBtn').click();
             });
