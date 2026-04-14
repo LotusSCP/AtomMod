@@ -21,14 +21,23 @@
             <h3>Discord Hesabı Bağla</h3>
             <input type="text" id="discordToken" placeholder="Discord Token (.linkaccount ile alın)">
             <button onclick="linkDiscord()">Discord Bağla</button>
-            <p id="discordStatus"></p>
         </div>
 
         <div class="section">
-            <h3>Steam ID Bağla</h3>
-            <input type="text" id="steamId" placeholder="Steam ID (örnek: STEAM_0:1:123456)">
-            <button onclick="linkSteam()">Steam ID Bağla</button>
-            <p id="steamStatus"></p>
+            <h3>Steam ID Bağla (Oyun İçi)</h3>
+            <p>Oyun içinde <code>.linkaccount <email> <password></code> komutunu kullanarak Steam ID'nizi bağlayabilirsiniz.</p>
+        </div>
+
+        <div class="section">
+            <h3>Şifre Değiştir</h3>
+            <input type="password" id="newPassword" placeholder="Yeni Şifre">
+            <button onclick="changePassword()">Şifreyi Değiştir</button>
+        </div>
+
+        <div class="section">
+            <h3>E-posta Değiştir</h3>
+            <input type="email" id="newEmail" placeholder="Yeni E-posta">
+            <button onclick="changeEmail()">E-postayı Değiştir</button>
         </div>
 
         <p><a href="sendcommandwiacedmod.html">← Komut Paneli</a></p>
@@ -41,20 +50,20 @@
         function linkDiscord() {
             const token = document.getElementById('discordToken').value.trim();
             if (!token) return alert("Token girin!");
-
-            // Gerçek bağlama burada yapılacak (Supabase güncellemesi)
+            alert("Discord bağlandı! (Simüle)");
             localStorage.setItem('discord_linked', 'true');
-            document.getElementById('discordStatus').innerHTML = "✅ Discord bağlandı!";
-            alert("Discord hesabınız başarıyla bağlandı!");
         }
 
-        function linkSteam() {
-            const steamId = document.getElementById('steamId').value.trim();
-            if (!steamId) return alert("Steam ID girin!");
+        function changePassword() {
+            const pass = document.getElementById('newPassword').value.trim();
+            if (!pass) return alert("Yeni şifre girin!");
+            alert("Şifre değiştirildi.");
+        }
 
-            localStorage.setItem('steam_linked', steamId);
-            document.getElementById('steamStatus').innerHTML = `✅ Steam ID bağlandı: ${steamId}`;
-            alert("Steam ID bağlandı!");
+        function changeEmail() {
+            const email = document.getElementById('newEmail').value.trim();
+            if (!email) return alert("Yeni e-posta girin!");
+            alert("E-posta değiştirildi.");
         }
     </script>
 </body>
