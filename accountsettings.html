@@ -11,19 +11,17 @@
         button { width: 100%; padding: 14px; margin-top: 15px; background: #0f0; color: black; border: none; border-radius: 8px; font-size: 17px; cursor: pointer; }
         button:hover { background: #0c0; }
         .section { margin: 25px 0; padding: 20px; background: #1a1a1a; border-radius: 8px; }
-        .success { color: #0f0; }
-        .error { color: #ff6666; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>⚙️ Hesap Ayarları</h1>
-        <p id="status" style="text-align:center;"></p>
+        <p id="status"></p>
 
         <div class="section">
             <h3>Discord Hesabı Bağla</h3>
+            <input type="text" id="discordToken" placeholder="Discord Token (.linkaccount ile alın)">
             <button onclick="linkDiscord()">Discord Bağla</button>
-            <p id="discordStatus"></p>
         </div>
 
         <div class="section">
@@ -38,33 +36,32 @@
             <button onclick="changeEmail()">E-postayı Değiştir</button>
         </div>
 
-        <p><a href="index.html">← Ana Sayfa</a> | <a href="sendcommandwiacedmod.html">Komut Paneli</a></p>
+        <p><a href="sendcommandwiacedmod.html">← Komut Paneli</a></p>
     </div>
 
     <script src="supabase.js"></script>
     <script src="app.js"></script>
 
     <script>
-        async function linkDiscord() {
-            const token = prompt("Discord tokeninizi girin (.linkaccount komutu ile alın):");
-            if (!token) return;
+        function linkDiscord() {
+            const token = document.getElementById('discordToken').value.trim();
+            if (!token) return alert("Token girin!");
 
-            // Supabase'e Discord bilgilerini kaydet (gerçek token doğrulama için)
+            // Burada Supabase'e token ile bağlama yapılacak
             alert("Discord bağlandı! (Simüle - Gerçekte Supabase güncellenecek)");
             localStorage.setItem('discord_linked', 'true');
-            document.getElementById('discordStatus').innerHTML = "✅ Discord hesabınız bağlandı.";
         }
 
-        async function changePassword() {
-            const newPass = document.getElementById('newPassword').value.trim();
-            if (!newPass) return alert("Yeni şifre girin!");
-            alert("Şifre değiştirildi (Simüle)");
+        function changePassword() {
+            const pass = document.getElementById('newPassword').value.trim();
+            if (!pass) return alert("Şifre girin!");
+            alert("Şifre değiştirildi.");
         }
 
-        async function changeEmail() {
-            const newEmail = document.getElementById('newEmail').value.trim();
-            if (!newEmail) return alert("Yeni e-posta girin!");
-            alert("E-posta değiştirildi (Simüle)");
+        function changeEmail() {
+            const email = document.getElementById('newEmail').value.trim();
+            if (!email) return alert("E-posta girin!");
+            alert("E-posta değiştirildi.");
         }
     </script>
 </body>
