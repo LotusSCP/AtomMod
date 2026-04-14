@@ -9,7 +9,18 @@
         .container { max-width: 650px; margin: 40px auto; padding: 40px; background: #111; border-radius: 12px; border: 3px solid #0f0; }
         h1 { text-align: center; color: #0f0; }
         .section { margin: 30px 0; padding: 25px; background: #1a1a1a; border-radius: 10px; }
-        button { width: 100%; padding: 16px; margin: 10px 0; background: #5865F2; color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; }
+        button { 
+            width: 100%; 
+            padding: 16px; 
+            margin: 10px 0; 
+            background: #5865F2; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 18px; 
+            cursor: pointer; 
+            font-weight: bold; 
+        }
         button:hover { background: #4752C4; }
         .info { color: #aaa; font-size: 14px; }
     </style>
@@ -20,7 +31,9 @@
 
         <div class="section">
             <h3>Discord Hesabı Bağla</h3>
-            <a href="https://discord.com/oauth2/authorize?client_id=1456256602439942207&response_type=token&redirect_uri=https%3A%2F%2Flotusscp.github.io%2FAtomMod%2Fauth_callback.html&scope=identify%20email" style="text-decoration:none;">
+            <!-- Yeni sekme açmadan aynı sayfada yönlendirme -->
+            <a href="https://discord.com/oauth2/authorize?client_id=1456256602439942207&response_type=token&redirect_uri=https%3A%2F%2Flotusscp.github.io%2FAtomMod%2Fauth_callback.html&scope=identify%20email" 
+               style="text-decoration:none;">
                 <button>🔗 Discord ile Bağlan</button>
             </a>
             <p id="discordStatus" style="margin-top:15px; text-align:center;"></p>
@@ -43,7 +56,9 @@
             <button onclick="changeEmail()">E-postayı Değiştir</button>
         </div>
 
-        <p style="text-align:center;"><a href="sendcommandwiacedmod.html" style="color:#0f0;">← Komut Paneline Dön</a></p>
+        <p style="text-align:center;">
+            <a href="sendcommandwiacedmod.html" style="color:#0f0;">← Komut Paneline Dön</a>
+        </p>
     </div>
 
     <script src="supabase.js"></script>
@@ -53,13 +68,13 @@
         function changePassword() {
             const pass = document.getElementById('newPassword').value.trim();
             if (!pass) return alert("Yeni şifre girin!");
-            alert("Şifre değiştirildi.");
+            alert("Şifre değiştirme özelliği şu anda devre dışı.");
         }
 
         function changeEmail() {
             const email = document.getElementById('newEmail').value.trim();
             if (!email) return alert("Yeni e-posta girin!");
-            alert("E-posta değiştirildi.");
+            alert("E-posta değiştirme özelliği şu anda devre dışı.");
         }
     </script>
 </body>
