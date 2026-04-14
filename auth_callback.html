@@ -4,15 +4,14 @@
     <meta charset="utf-8" />
     <title>Discord Bağlama</title>
     <style>
-        body { font-family: Arial; background: #0a0a0a; color: #0f0; text-align: center; padding: 100px; }
-        .success { color: #0f0; font-size: 26px; }
+        body { font-family: Arial; background: #0a0a0a; color: #0f0; text-align: center; padding: 80px; }
+        .success { color: #0f0; font-size: 24px; }
+        .error { color: #ff6666; }
     </style>
 </head>
 <body>
-    <h1>Discord Bağlama İşlemi</h1>
-    <div id="status">Bağlantı kuruluyor...</div>
-
-    <script src="supabase.js"></script>
+    <h1>Discord Bağlama</h1>
+    <div id="status">İşlem yapılıyor...</div>
 
     <script>
         async function completeDiscordLink() {
@@ -21,65 +20,62 @@
             const accessToken = params.get('access_token');
 
             if (!accessToken) {
-                document.getElementById('status').innerHTML = "❌ Token alınamadı. Lütfen tekrar deneyin.";
+                document.getElementById('status').innerHTML = `<span class="error">❌ Token alınamadı.</span>`;
                 return;
             }
 
             try {
-                // 1. Discord'dan kullanıcı bilgisini al
+                // Discord'dan kullanıcı bilgisi al
                 const userRes = await fetch('https://discord.com/api/users/@me', {
                     headers: { 'Authorization': `Bearer ${accessToken}` }
                 });
 
+                if (!userRes.ok) throw new Error("Discord API hatası");
+
                 const user = await userRes.json();
 
-                if (!user.id) {
-                    throw new Error("Kullanıcı bilgisi alınamadı");
-                }
+                // Supabase ayarları (kendi bilgilerini yaz)
+                const SUPABASE_URL = "https://kdvvvldbetjthldhodab.supabase.co";
+                const ANON_KEY = "BURAYA_ANON_KEY_INI_YAZ";   // ← Buraya kendi anon key'ini yaz
 
-                // 2. Supabase'te discord_id ve discord_username güncelle
-                // (Kullanıcıyı username veya başka bir şekilde bulman gerekebilir. Şimdilik örnek olarak son hesap güncelleniyor)
-                const supabaseUrl = "https://kdvvvldbetjthldhodab.supabase.co"; // kendi url'ini yaz
-                const anonKey = "YOUR_ANON_KEY"; // kendi anon key'ini yaz
+                // Hangi hesabı güncelleyeceğimizi bilmek için (login sonrası kaydetmen lazım)
+                const currentUsername = localStorage.getItem('current_username') || "admin";
 
-                // NOT: Gerçek uygulamada hangi hesabın bağlandığını bilmek için username veya session kullanman lazım.
-                // Şimdilik basitçe localStorage'dan username alıyoruz (login sonrası ekle)
-                const currentUsername = localStorage.getItem('current_username') || "admin"; // login sonrası buraya username kaydet
+                const updateUrl = `${SUPABASE_URL}/rest/v1/accounts?username=eq.${encodeURIComponent(currentUsername)}`;
 
-                const updateUrl = `${supabaseUrl}/rest/v1/accounts?username=eq.${encodeURIComponent(currentUsername)}`;
-
-                const updateBody = {
-                    discord_id: user.id,
-                    discord_username: user.username + "#" + user.discriminator,
+                const body = {
+                    discord_id: user.id.toString(),
+                    discord_username: user.username + (user.discriminator ? "#" + user.discriminator : ""),
                     linked_at: new Date().toISOString()
                 };
 
                 const res = await fetch(updateUrl, {
                     method: 'PATCH',
                     headers: {
-                        'apikey': anonKey,
-                        'Authorization': `Bearer ${anonKey}`,
+                        'apikey': ANON_KEY,
+                        'Authorization': `Bearer ${ANON_KEY}`,
                         'Content-Type': 'application/json',
                         'Prefer': 'return=representation'
                     },
-                    body: JSON.stringify(updateBody)
+                    body: JSON.stringify(body)
                 });
 
                 if (res.ok) {
                     localStorage.setItem('discord_linked', 'true');
                     localStorage.setItem('discord_id', user.id);
                     document.getElementById('status').innerHTML = `
-                        <span class="success">✅ Discord hesabınız başarıyla bağlandı!</span><br><br>
+                        <span class="success">✅ Başarıyla bağlandı!</span><br><br>
                         Discord ID: ${user.id}<br>
                         Kullanıcı: ${user.username}<br><br>
-                        <a href="sendcommandwiacedmod.html" style="color:#0f0; font-size:20px;">Komut Paneline Dön</a>
+                        <a href="sendcommandwiacedmod.html" style="color:#0f0;">Komut Paneline Dön →</a>
                     `;
                 } else {
-                    throw new Error("Supabase güncellenemedi");
+                    const errText = await res.text();
+                    throw new Error(`Supabase hatası: ${res.status} - ${errText}`);
                 }
             } catch (err) {
-                document.getElementById('status').innerHTML = `❌ Hata: ${err.message}`;
                 console.error(err);
+                document.getElementById('status').innerHTML = `<span class="error">❌ Hata: ${err.message}</span>`;
             }
         }
 
