@@ -6,7 +6,7 @@
     <title>AtomMod - SagaNetwork Komut Paneli</title>
     <style>
         body { background: #0a0a0a; color: #ddd; font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 950px; margin: 40px auto; padding: 30px; background: #111; border-radius: 12px; border: 3px solid #0f0; }
+        .container { max-width: 1000px; margin: 40px auto; padding: 30px; background: #111; border-radius: 12px; border: 3px solid #0f0; }
         h1 { text-align: center; color: #0f0; }
         .permission { text-align: center; font-size: 20px; margin: 20px 0; padding: 12px; border-radius: 8px; }
         label { display: block; margin: 15px 0 8px; font-weight: bold; color: #0f0; }
@@ -16,6 +16,19 @@
         .result { margin-top: 25px; padding: 18px; border-radius: 8px; min-height: 140px; white-space: pre-wrap; }
         .success { background: #002200; color: #0f0; }
         .error { background: #220000; color: #ff6666; }
+        .players-list { 
+            margin-top: 30px; 
+            padding: 20px; 
+            background: #1a1a1a; 
+            border-radius: 10px; 
+            border: 1px solid #0f0;
+        }
+        .player-item {
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: #222;
+            border-radius: 6px;
+        }
     </style>
 </head>
 <body>
@@ -29,6 +42,12 @@
         <button id="sendBtn">🚀 Komutu Gönder</button>
 
         <div id="result" class="result"></div>
+
+        <!-- Oyuncu Listesi Bölümü -->
+        <div class="players-list">
+            <h3>🎮 Şu Anda Oyunda Olanlar (<span id="playerCount">0</span>)</h3>
+            <div id="playersList"></div>
+        </div>
     </div>
 
     <script src="supabase.js"></script>
@@ -38,33 +57,43 @@
         const SERVER_ID = "43ef2206-a5ff-4ff8-bfd5-9ac16a5dc11e";
         const API_KEY   = "ptlc_YsIfuDZimR2TLQcXqjfVnxtLmBuNTlmHcqYXE5TTtI9";
 
-        // ==================== DISCORD WEBHOOK ====================
-        const DISCORD_WEBHOOK = "https://canary.discord.com/api/webhooks/1493627753411383478/waLqzXWxxghI---MNM9KIp5r3bXjYxRbGkVsUNMdm-r5f3xyQ6C9uK_cG3KicTJZkbHn";   // ← Burayı doldur
+        const DISCORD_WEBHOOK = "BURAYA_WEBHOOK_URL_NI_YAPISTIR";
 
-        // ====================== DISCORD LOG ======================
         async function sendDiscordLog(username, discordId, command) {
             if (!DISCORD_WEBHOOK || DISCORD_WEBHOOK.includes("BURAYA")) return;
-
             const mention = discordId ? `<@${discordId}>` : (username || "Yetkili");
-
             const payload = {
                 content: `${mention} şu komudu kullandı:\n**${command}**`,
-                username: "AtomMod Komut Log",
-                avatar_url: "https://i.imgur.com/0Z8v4zL.png"
+                username: "AtomMod Komut Log"
             };
+            try { await fetch(DISCORD_WEBHOOK, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }); } 
+            catch(e) {}
+        }
+
+        // ====================== OYUNCU LİSTESİ YÜKLE ======================
+        async function loadPlayers() {
+            const playersList = document.getElementById('playersList');
+            const countEl = document.getElementById('playerCount');
 
             try {
-                await fetch(DISCORD_WEBHOOK, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                // Basit bir şekilde Exiled üzerinden oyuncu listesi alıyoruz (gerçek zamanlı)
+                const players = Exiled.API.Features.Player.List;
+
+                countEl.textContent = players.Count;
+
+                let html = '';
+                players.forEach(p => {
+                    html += `<div class="player-item">👤 ${p.Nickname} <small style="color:#888">(${p.UserId.replace('@steam','')})</small></div>`;
                 });
-            } catch (e) {
-                console.log("Discord log gönderilemedi:", e);
+
+                playersList.innerHTML = html || '<p style="color:#888">Şu anda kimse oyunda değil.</p>';
+
+            } catch (err) {
+                playersList.innerHTML = '<p style="color:#ff6666">Oyuncu listesi yüklenemedi.</p>';
             }
         }
 
-        // ====================== ANA KOD ======================
+        // ====================== KOMUT GÖNDERME ======================
         window.addEventListener('load', async () => {
             const perm = Number(sessionStorage.getItem('atommod_permission') || 0);
             const infoEl = document.getElementById('permissionInfo');
@@ -80,6 +109,10 @@
                 document.getElementById('sendBtn').disabled = true;
                 return;
             }
+
+            // Oyuncu listesini ilk yükle ve her 5 saniyede bir yenile
+            loadPlayers();
+            setInterval(loadPlayers, 5000);
 
             document.getElementById('sendBtn').addEventListener('click', async () => {
                 let cmd = document.getElementById('commandArgs').value.trim();
@@ -102,32 +135,12 @@
                     });
 
                     let discordId = null;
-
-                    // Supabase'den discord_id çek (eğer login yapılmışsa)
-                    if (window.supabaseUtils && currentUsername !== "Yetkili") {
-                        try {
-                            const SUPABASE_URL = window.atommodApp?.defaultSupabaseUrl;
-                            const SUPABASE_ANON = window.atommodApp?.defaultSupabaseAnon;
-
-                            const url = `${SUPABASE_URL}/rest/v1/accounts?select=discord_id&username=eq.${encodeURIComponent(currentUsername)}`;
-                            const userRes = await fetch(url, {
-                                headers: {
-                                    'apikey': SUPABASE_ANON,
-                                    'Authorization': `Bearer ${SUPABASE_ANON}`
-                                }
-                            });
-                            const userData = await userRes.json();
-                            if (userData && userData.length > 0) {
-                                discordId = userData[0].discord_id;
-                            }
-                        } catch (e) {}
-                    }
+                    // Discord ID çekme (opsiyonel)
 
                     if (res.ok || res.status === 204) {
                         resultBox.className = 'result success';
                         resultBox.innerHTML = `✅ Komut başarıyla gönderildi!<br><strong>${cmd}</strong>`;
 
-                        // Discord Log At
                         await sendDiscordLog(currentUsername, discordId, cmd);
                     } else {
                         resultBox.className = 'result error';
@@ -139,7 +152,7 @@
                 }
             });
 
-            // Enter tuşu ile gönderme
+            // Enter tuşu desteği
             document.getElementById('commandArgs').addEventListener('keypress', (e) => {
                 if (e.key === "Enter") document.getElementById('sendBtn').click();
             });
