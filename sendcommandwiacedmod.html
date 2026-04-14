@@ -52,16 +52,16 @@
         const API_KEY   = "ptlc_YsIfuDZimR2TLQcXqjfVnxtLmBuNTlmHcqYXE5TTtI9";
 
         // ====================== DISCORD WEBHOOK ======================
-        const DISCORD_WEBHOOK = "https://canary.discord.com/api/webhooks/1493627753411383478/waLqzXWxxghI---MNM9KIp5r3bXjYxRbGkVsUNMdm-r5f3xyQ6C9uK_cG3KicTJZkbHn";   // ← Burayı doldur
+        const DISCORD_WEBHOOK = "BURAYA_WEBHOOK_URL_NI_YAPISTIR";   // ← Burayı doldur
 
-        // ====================== DISCORD LOG ATMA (discord_id ile) ======================
-        async function sendDiscordLog(discordId, command) {
+        // ====================== DISCORD LOG (EMAIL İLE) ======================
+        async function sendDiscordLog(email, command) {
             if (!DISCORD_WEBHOOK || DISCORD_WEBHOOK.includes("BURAYA")) return;
 
-            const mention = discordId ? `<@${discordId}>` : "Yetkili";
+            const user = email || "Yetkili";
 
             const payload = {
-                content: `${mention} şu komudu kullandı:\n**${command}**`,
+                content: `${user} şu komudu kullandı:\n**${command}**`,
                 username: "AtomMod Komut Log",
                 avatar_url: "https://i.imgur.com/0Z8v4zL.png"
             };
@@ -132,31 +132,7 @@
                 resultBox.className = 'result';
                 resultBox.innerHTML = '🔄 Komut gönderiliyor...';
 
-                const currentUsername = localStorage.getItem('atommod_lastuser') || "Yetkili";
-
-                let discordId = null;
-
-                // Supabase'den discord_id çek
-                try {
-                    const SUPABASE_URL = window.atommodApp?.defaultSupabaseUrl;
-                    const SUPABASE_ANON = window.atommodApp?.defaultSupabaseAnon;
-
-                    if (SUPABASE_URL && SUPABASE_ANON && currentUsername !== "Yetkili") {
-                        const url = `${SUPABASE_URL}/rest/v1/accounts?select=discord_id&username=eq.${encodeURIComponent(currentUsername)}`;
-                        const userRes = await fetch(url, {
-                            headers: {
-                                'apikey': SUPABASE_ANON,
-                                'Authorization': `Bearer ${SUPABASE_ANON}`
-                            }
-                        });
-                        const data = await userRes.json();
-                        if (data && data.length > 0) {
-                            discordId = data[0].discord_id;
-                        }
-                    }
-                } catch (e) {
-                    console.log("Discord ID çekilemedi:", e);
-                }
+                const currentEmail = localStorage.getItem('atommod_lastuser') || "Yetkili";   // email olarak kullanıyoruz
 
                 try {
                     const res = await fetch(`${PANEL_URL}/api/client/servers/${SERVER_ID}/command`, {
@@ -172,8 +148,8 @@
                         resultBox.className = 'result success';
                         resultBox.innerHTML = `✅ Komut başarıyla gönderildi!<br><strong>${cmd}</strong>`;
 
-                        // Discord Log At (sadece discord_id ile)
-                        await sendDiscordLog(discordId, cmd);
+                        // Discord Log At (email ile)
+                        await sendDiscordLog(currentEmail, cmd);
                     } else {
                         resultBox.className = 'result error';
                         resultBox.innerHTML = `❌ Hata (${res.status})`;
