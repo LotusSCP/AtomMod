@@ -24,8 +24,8 @@
             border: 1px solid #0f0;
         }
         .player-item {
-            padding: 8px 12px;
-            margin: 4px 0;
+            padding: 10px 14px;
+            margin: 6px 0;
             background: #222;
             border-radius: 6px;
         }
@@ -37,16 +37,16 @@
         <p id="permissionInfo" class="permission"></p>
 
         <label>Komut Yazın (Raw):</label>
-        <input type="text" id="commandArgs" placeholder="Örn: broadcast Merhaba, roundrestart, cassie Test mesajı..." autofocus>
+        <input type="text" id="commandArgs" placeholder="Örn: broadcast Merhaba, roundrestart, cassie Test..." autofocus>
 
         <button id="sendBtn">🚀 Komutu Gönder</button>
 
         <div id="result" class="result"></div>
 
-        <!-- Oyuncu Listesi Bölümü -->
+        <!-- SagaNetwork Oyuncu Listesi -->
         <div class="players-list">
             <h3>🎮 Şu Anda Oyunda Olanlar (<span id="playerCount">0</span>)</h3>
-            <div id="playersList"></div>
+            <div id="playersList">Oyuncu listesi yükleniyor...</div>
         </div>
     </div>
 
@@ -57,39 +57,38 @@
         const SERVER_ID = "43ef2206-a5ff-4ff8-bfd5-9ac16a5dc11e";
         const API_KEY   = "ptlc_YsIfuDZimR2TLQcXqjfVnxtLmBuNTlmHcqYXE5TTtI9";
 
-        const DISCORD_WEBHOOK = "BURAYA_WEBHOOK_URL_NI_YAPISTIR";
-
-        async function sendDiscordLog(username, discordId, command) {
-            if (!DISCORD_WEBHOOK || DISCORD_WEBHOOK.includes("BURAYA")) return;
-            const mention = discordId ? `<@${discordId}>` : (username || "Yetkili");
-            const payload = {
-                content: `${mention} şu komudu kullandı:\n**${command}**`,
-                username: "AtomMod Komut Log"
-            };
-            try { await fetch(DISCORD_WEBHOOK, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }); } 
-            catch(e) {}
-        }
-
-        // ====================== OYUNCU LİSTESİ YÜKLE ======================
+        // ====================== SAGA NETWORK OYUNCU LİSTESİ ======================
         async function loadPlayers() {
-            const playersList = document.getElementById('playersList');
+            const listEl = document.getElementById('playersList');
             const countEl = document.getElementById('playerCount');
 
             try {
-                // Basit bir şekilde Exiled üzerinden oyuncu listesi alıyoruz (gerçek zamanlı)
-                const players = Exiled.API.Features.Player.List;
-
-                countEl.textContent = players.Count;
-
-                let html = '';
-                players.forEach(p => {
-                    html += `<div class="player-item">👤 ${p.Nickname} <small style="color:#888">(${p.UserId.replace('@steam','')})</small></div>`;
+                const res = await fetch(`${PANEL_URL}/api/client/servers/${SERVER_ID}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Accept': 'application/json'
+                    }
                 });
 
-                playersList.innerHTML = html || '<p style="color:#888">Şu anda kimse oyunda değil.</p>';
+                if (!res.ok) throw new Error("Sunucu bilgisi alınamadı");
+
+                const data = await res.json();
+
+                const players = data.attributes?.player_count || 0;
+                countEl.textContent = players;
+
+                // Not: Pterodactyl API direkt oyuncu listesi vermiyor, sadece sayı veriyor.
+                // Gerçek isimler için plugin tarafında ekstra endpoint gerekiyor.
+                listEl.innerHTML = `
+                    <div class="player-item">
+                        <span>📊 Toplam Online Oyuncu: <strong>${players}</strong></span>
+                    </div>
+                    <small style="color:#888">• Gerçek oyuncu isimleri için plugin güncellemesi gerekiyor.</small>
+                `;
 
             } catch (err) {
-                playersList.innerHTML = '<p style="color:#ff6666">Oyuncu listesi yüklenemedi.</p>';
+                listEl.innerHTML = `<span style="color:#ff6666">❌ Oyuncu listesi yüklenemedi.<br>${err.message}</span>`;
             }
         }
 
@@ -110,9 +109,9 @@
                 return;
             }
 
-            // Oyuncu listesini ilk yükle ve her 5 saniyede bir yenile
+            // Oyuncu listesini yükle
             loadPlayers();
-            setInterval(loadPlayers, 5000);
+            setInterval(loadPlayers, 8000);   // Her 8 saniyede yenile
 
             document.getElementById('sendBtn').addEventListener('click', async () => {
                 let cmd = document.getElementById('commandArgs').value.trim();
@@ -121,8 +120,6 @@
                 const resultBox = document.getElementById('result');
                 resultBox.className = 'result';
                 resultBox.innerHTML = '🔄 Komut gönderiliyor...';
-
-                const currentUsername = localStorage.getItem('atommod_lastuser') || "Yetkili";
 
                 try {
                     const res = await fetch(`${PANEL_URL}/api/client/servers/${SERVER_ID}/command`, {
@@ -134,14 +131,9 @@
                         body: JSON.stringify({ command: cmd })
                     });
 
-                    let discordId = null;
-                    // Discord ID çekme (opsiyonel)
-
                     if (res.ok || res.status === 204) {
                         resultBox.className = 'result success';
                         resultBox.innerHTML = `✅ Komut başarıyla gönderildi!<br><strong>${cmd}</strong>`;
-
-                        await sendDiscordLog(currentUsername, discordId, cmd);
                     } else {
                         resultBox.className = 'result error';
                         resultBox.innerHTML = `❌ Hata (${res.status})`;
@@ -152,7 +144,6 @@
                 }
             });
 
-            // Enter tuşu desteği
             document.getElementById('commandArgs').addEventListener('keypress', (e) => {
                 if (e.key === "Enter") document.getElementById('sendBtn').click();
             });
