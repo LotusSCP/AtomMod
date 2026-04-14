@@ -39,13 +39,16 @@
         const API_KEY   = "ptlc_YsIfuDZimR2TLQcXqjfVnxtLmBuNTlmHcqYXE5TTtI9";
 
         // ==================== DISCORD WEBHOOK ====================
-        const DISCORD_WEBHOOK = "https://canary.discord.com/api/webhooks/1493627753411383478/waLqzXWxxghI---MNM9KIp5r3bXjYxRbGkVsUNMdm-r5f3xyQ6C9uK_cG3KicTJZkbHn";   // ←←← BURAYI DEĞİŞTİR
+        const DISCORD_WEBHOOK = "https://canary.discord.com/api/webhooks/1493627753411383478/waLqzXWxxghI---MNM9KIp5r3bXjYxRbGkVsUNMdm-r5f3xyQ6C9uK_cG3KicTJZkbHn";   // ← Burayı doldur
 
-        async function sendDiscordLog(username, command) {
+        // ====================== DISCORD LOG ======================
+        async function sendDiscordLog(username, discordId, command) {
             if (!DISCORD_WEBHOOK || DISCORD_WEBHOOK.includes("BURAYA")) return;
 
+            const mention = discordId ? `<@${discordId}>` : (username || "Yetkili");
+
             const payload = {
-                content: `<@${username || "Yetkili"}> şu komudu kullandı:\n**${command}**`,
+                content: `${mention} şu komudu kullandı:\n**${command}**`,
                 username: "AtomMod Komut Log",
                 avatar_url: "https://i.imgur.com/0Z8v4zL.png"
             };
@@ -86,6 +89,8 @@
                 resultBox.className = 'result';
                 resultBox.innerHTML = '🔄 Komut gönderiliyor...';
 
+                const currentUsername = localStorage.getItem('atommod_lastuser') || "Yetkili";
+
                 try {
                     const res = await fetch(`${PANEL_URL}/api/client/servers/${SERVER_ID}/command`, {
                         method: 'POST',
@@ -96,12 +101,34 @@
                         body: JSON.stringify({ command: cmd })
                     });
 
+                    let discordId = null;
+
+                    // Supabase'den discord_id çek (eğer login yapılmışsa)
+                    if (window.supabaseUtils && currentUsername !== "Yetkili") {
+                        try {
+                            const SUPABASE_URL = window.atommodApp?.defaultSupabaseUrl;
+                            const SUPABASE_ANON = window.atommodApp?.defaultSupabaseAnon;
+
+                            const url = `${SUPABASE_URL}/rest/v1/accounts?select=discord_id&username=eq.${encodeURIComponent(currentUsername)}`;
+                            const userRes = await fetch(url, {
+                                headers: {
+                                    'apikey': SUPABASE_ANON,
+                                    'Authorization': `Bearer ${SUPABASE_ANON}`
+                                }
+                            });
+                            const userData = await userRes.json();
+                            if (userData && userData.length > 0) {
+                                discordId = userData[0].discord_id;
+                            }
+                        } catch (e) {}
+                    }
+
                     if (res.ok || res.status === 204) {
                         resultBox.className = 'result success';
                         resultBox.innerHTML = `✅ Komut başarıyla gönderildi!<br><strong>${cmd}</strong>`;
 
-                        // Discord'a log at
-                        await sendDiscordLog("Yetkili", cmd);
+                        // Discord Log At
+                        await sendDiscordLog(currentUsername, discordId, cmd);
                     } else {
                         resultBox.className = 'result error';
                         resultBox.innerHTML = `❌ Hata (${res.status})`;
@@ -112,7 +139,7 @@
                 }
             });
 
-            // Enter tuşu desteği
+            // Enter tuşu ile gönderme
             document.getElementById('commandArgs').addEventListener('keypress', (e) => {
                 if (e.key === "Enter") document.getElementById('sendBtn').click();
             });
