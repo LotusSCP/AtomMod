@@ -5,26 +5,28 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>AtomMod - Kontrol Paneli</title>
     <style>
-        :root {
-            --primary: #00ff41;
-            --bg: #0a0a0a;
-            --card: #111111;
-        }
-        * { box-sizing: border-box; }
-        body {
-            background: var(--bg);
-            color: #ddd;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
+        :root { --primary: #00ff41; --bg: #0a0a0a; --card: #111; }
+        body { background: var(--bg); color: #ddd; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
         .header {
             background: rgba(0,0,0,0.85);
-            padding: 25px;
+            padding: 20px;
             text-align: center;
             border-bottom: 3px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        h1 { margin: 0; color: var(--primary); font-size: 2.2em; }
+        h1 { margin: 0; color: var(--primary); }
+        .logout-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .logout-btn:hover { background: #cc0000; }
         .nav {
             display: flex;
             justify-content: center;
@@ -38,30 +40,27 @@
             padding: 14px 28px;
             background: #1a1a1a;
             border-radius: 10px;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
         }
         .nav a:hover {
             background: var(--primary);
             color: black;
-            transform: translateY(-3px);
         }
         .card {
             background: var(--card);
             border: 2px solid var(--primary);
             border-radius: 16px;
-            padding: 35px;
+            padding: 40px;
             margin: 30px auto;
             max-width: 900px;
             text-align: center;
-            box-shadow: 0 8px 25px rgba(0, 255, 65, 0.08);
         }
-        .status { font-size: 1.3em; margin: 15px 0; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>🔧 AtomMod Kontrol Paneli</h1>
+        <button class="logout-btn" id="logoutBtn">Çıkış Yap</button>
     </div>
 
     <div class="nav">
@@ -72,10 +71,8 @@
     </div>
 
     <div class="card">
-        <div id="welcome" class="status"></div>
-        <p style="color:#888; font-size:1.1em;">
-            Hoş geldiniz. Yetkinize göre komut gönderebilir ve sunucuyu yönetebilirsiniz.
-        </p>
+        <div id="welcome" style="font-size:1.4em; margin-bottom:15px;"></div>
+        <p style="color:#888;">Hoş geldiniz. Yetkinize göre komut gönderebilir ve sunucuyu yönetebilirsiniz.</p>
     </div>
 
     <script src="app.js"></script>
@@ -92,6 +89,16 @@
             } else {
                 welcomeEl.innerHTML = `❌ Giriş yapmadınız. Lütfen <a href="login.html" style="color:#00ff41;">giriş yapın</a>.`;
                 welcomeEl.style.color = '#ff6666';
+            }
+        });
+
+        // Çıkış Yap Butonu
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
+                localStorage.removeItem('atommod_logged_in');
+                localStorage.removeItem('atommod_lastuser');
+                sessionStorage.clear();
+                window.location.href = 'login.html';
             }
         });
     </script>
