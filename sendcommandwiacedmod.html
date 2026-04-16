@@ -17,14 +17,19 @@
         .success { background: #002200; color: #0f0; }
         .error { background: #220000; color: #ff6666; }
         .commands { margin: 25px 0; display: flex; flex-wrap: wrap; gap: 8px; }
-        .cmd-btn { padding: 10px 16px; background: #222; border: 1px solid #0f0; border-radius: 6px; cursor: pointer; }
+        .cmd-btn { padding: 10px 16px; background: #222; border: 1px solid #0f0; border-radius: 6px; cursor: pointer; font-size: 14px; }
         .cmd-btn:hover { background: #0f0; color: black; }
+        .players-list { margin-top: 30px; padding: 20px; background: #1a1a1a; border-radius: 10px; border: 1px solid #0f0; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🔧 AtomMod Uzaktan Komut Paneli</h1>
         <p id="permissionInfo" class="permission"></p>
+
+        <a href="accountsettings.html" style="text-decoration:none;">
+            <button style="background:#5865F2; margin-bottom:15px;">🔗 Discord Hesabı Bağla</button>
+        </a>
 
         <label>Komut Yazın:</label>
         <input type="text" id="commandArgs" placeholder="Komut yazın veya listeden seçin..." autofocus>
@@ -34,6 +39,11 @@
         <button id="sendBtn">🚀 Komutu Gönder</button>
 
         <div id="result" class="result"></div>
+
+        <div class="players-list">
+            <h3>🎮 Şu Anda Oyunda Olanlar (<span id="playerCount">0</span>)</h3>
+            <div id="playersList">Yükleniyor...</div>
+        </div>
     </div>
 
     <script src="supabase.js"></script>
@@ -43,17 +53,13 @@
         let userPermission = 0;
         let permissionConfig = [];
 
-        // ====================== CONFIG ÇEKME ======================
         async function loadConfig() {
             try {
                 const res = await fetch('https://lotusscp.github.io/atommodapi/config.json');
                 CONFIG = await res.json();
-            } catch (e) {
-                console.error("Config yüklenemedi", e);
-            }
+            } catch (e) { console.error("Config yüklenemedi", e); }
         }
 
-        // ====================== PERMISSIONCONFIG ÇEKME ======================
         async function loadPermissionConfig() {
             if (!CONFIG.supabase) return;
             try {
@@ -65,56 +71,49 @@
                     }
                 });
                 permissionConfig = await res.json();
-            } catch (e) {
-                console.error("Permission config çekilemedi", e);
-            }
+            } catch (e) { console.error("Permission config çekilemedi", e); }
         }
 
-        // ====================== KOMUT İZNİ KONTROLÜ ======================
         function canUseCommand(cmd) {
-            if (userPermission >= 65535) return true; // Tam yetki
+            if (userPermission >= 65535) return true;
 
-            const permRow = permissionConfig.find(p => p.permission === userPermission);
-            if (!permRow) return false;
+            const row = permissionConfig.find(p => p.permission === userPermission);
+            if (!row) return false;
 
-            const allowed = permRow.commandperm || [];
-            const blacklisted = permRow.blacklisted || [];
+            const allowed = row.commandperm || [];
+            const blacklisted = row.blacklisted || [];
 
-            // Blacklist kontrolü
-            if (blacklisted.some(b => cmd.toLowerCase().includes(b.toLowerCase()))) {
-                return false;
-            }
-
-            // .* varsa her şeye izin ver
+            if (blacklisted.some(b => cmd.toLowerCase().includes(b.toLowerCase()))) return false;
             if (allowed.includes(".*")) return true;
 
-            // Belirli komutlara izin ver
             return allowed.some(a => cmd.toLowerCase().startsWith(a.toLowerCase()));
         }
 
-        // ====================== KOMUT BUTONLARI ======================
         function createCommandButtons() {
             const container = document.getElementById('commandButtons');
             container.innerHTML = '';
 
-            const cmds = [
-                {text: "Broadcast", cmd: "broadcast Merhaba!"},
+            const allCommands = [
+                {text: "Broadcast", cmd: "broadcast Merhaba Sunucu!"},
                 {text: "Round Restart", cmd: "roundrestart"},
                 {text: "Cassie", cmd: "cassie Test mesajı"},
                 {text: "Nuke", cmd: "nuke"},
-                {text: "Stop Nuke", cmd: "stopnuke"}
+                {text: "Stop Nuke", cmd: "stopnuke"},
+                {text: "Help", cmd: "help"},
+                {text: "Players", cmd: "players"}
             ];
 
-            cmds.forEach(item => {
+            allCommands.forEach(item => {
                 const btn = document.createElement('div');
                 btn.className = 'cmd-btn';
                 btn.textContent = item.text;
-                btn.onclick = () => document.getElementById('commandArgs').value = item.cmd;
+                btn.onclick = () => {
+                    document.getElementById('commandArgs').value = item.cmd;
+                };
                 container.appendChild(btn);
             });
         }
 
-        // ====================== ANA YÜKLEME ======================
         window.addEventListener('load', async () => {
             await loadConfig();
             await loadPermissionConfig();
@@ -136,12 +135,17 @@
 
             createCommandButtons();
 
+            // Oyuncu listesi
+            loadPlayers();
+            setInterval(loadPlayers, 8000);
+
+            // Komut gönderme
             document.getElementById('sendBtn').addEventListener('click', async () => {
                 let cmd = document.getElementById('commandArgs').value.trim();
                 if (!cmd) return alert("Komut girin!");
 
                 if (!canUseCommand(cmd)) {
-                    return alert("❌ Bu komutu kullanma yetkiniz yok veya komut yasaklı!");
+                    return alert("❌ Bu komutu kullanma yetkiniz yok!");
                 }
 
                 const resultBox = document.getElementById('result');
@@ -162,7 +166,7 @@
                         resultBox.className = 'result success';
                         resultBox.innerHTML = `✅ Komut gönderildi!<br><strong>${cmd}</strong>`;
 
-                        // Discord Log (email ile)
+                        // Discord Log
                         if (CONFIG.discord_webhook) {
                             const user = localStorage.getItem('atommod_lastuser') || "Yetkili";
                             await fetch(CONFIG.discord_webhook, {
@@ -181,6 +185,22 @@
                 }
             });
         });
+
+        async function loadPlayers() {
+            const listEl = document.getElementById('playersList');
+            const countEl = document.getElementById('playerCount');
+            try {
+                const res = await fetch(`${CONFIG.saganetwork.panel_url}/api/client/servers/${CONFIG.saganetwork.server_id}`, {
+                    headers: { 'Authorization': `Bearer ${CONFIG.saganetwork.api_key}` }
+                });
+                const data = await res.json();
+                const count = data.attributes?.player_count || 0;
+                countEl.textContent = count;
+                listEl.innerHTML = `<div style="color:#0f0">Şu anda <strong>${count}</strong> oyuncu oyunda.</div>`;
+            } catch (e) {
+                listEl.innerHTML = "Oyuncu listesi alınamadı.";
+            }
+        }
     </script>
 </body>
 </html>
