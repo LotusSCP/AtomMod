@@ -14,26 +14,40 @@
             background: var(--card);
             border-radius: 16px;
             border: 2px solid var(--primary);
+            box-shadow: 0 10px 30px rgba(0,255,65,0.1);
         }
-        h1 { text-align: center; color: var(--primary); }
+        h1 { text-align: center; color: var(--primary); margin-bottom: 30px; }
         .section {
             background: #1a1a1a;
             padding: 25px;
             border-radius: 12px;
             margin: 25px 0;
         }
+        label { display: block; margin: 12px 0 6px; font-weight: bold; color: #0f0; }
+        input {
+            width: 100%;
+            padding: 14px;
+            background: #1e1e1e;
+            color: white;
+            border: 1px solid #0f0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
         button {
             width: 100%;
             padding: 16px;
-            margin: 10px 0;
-            background: #5865F2;
-            color: white;
+            margin-top: 15px;
+            background: #0f0;
+            color: black;
             border: none;
             border-radius: 8px;
             font-size: 17px;
+            font-weight: bold;
             cursor: pointer;
         }
-        button:hover { background: #4752C4; }
+        button:hover { background: #0c0; }
+        button:disabled { background: #555; cursor: not-allowed; }
+        .info { color: #aaa; font-size: 14px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -42,19 +56,114 @@
 
         <div class="section">
             <h3>Discord Hesabı Bağla</h3>
-            <a href="https://discord.com/oauth2/authorize?client_id=1456256602439942207&response_type=token&redirect_uri=https%3A%2F%2Flotusscp.github.io%2FAtomMod%2Fauth_callback.html&scope=identify%20email" style="text-decoration:none;">
+            <a href="https://discord.com/oauth2/authorize?client_id=1456256602439942207&response_type=token&redirect_uri=https%3A%2F%2Flotusscp.github.io%2FAtomMod%2Fauth_callback.html&scope=identify%20email" 
+               style="text-decoration:none;">
                 <button>🔗 Discord ile Bağlan</button>
             </a>
         </div>
 
         <div class="section">
+            <h3>Kullanıcı Adı Değiştir</h3>
+            <input type="text" id="newUsername" placeholder="Yeni kullanıcı adı">
+            <button id="changeUsernameBtn">Kullanıcı Adını Değiştir</button>
+            <div class="info" id="usernameStatus"></div>
+        </div>
+
+        <div class="section">
+            <h3>Şifre Değiştir</h3>
+            <input type="password" id="newPassword" placeholder="Yeni şifre">
+            <button id="changePasswordBtn">Şifreyi Değiştir</button>
+            <div class="info" id="passwordStatus"></div>
+        </div>
+
+        <div class="section">
             <h3>Steam ID Bağla</h3>
-            <p>Oyun içinde şu komutu kullanın:<br><code>.linkaccount &lt;email&gt; &lt;password&gt;</code></p>
+            <p class="info">Oyun içinde şu komutu kullanın:<br><code>.linkaccount &lt;email&gt; &lt;password&gt;</code></p>
         </div>
 
         <p style="text-align:center; margin-top:30px;">
             <a href="sendcommandwiacedmod.html" style="color:#0f0; font-size:18px;">← Komut Paneline Dön</a>
         </p>
     </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Kullanıcı adı değiştir
+        document.getElementById('changeUsernameBtn').addEventListener('click', async () => {
+            const newUsername = document.getElementById('newUsername').value.trim();
+            const statusEl = document.getElementById('usernameStatus');
+
+            if (!newUsername) return alert("Yeni kullanıcı adı girin!");
+
+            statusEl.innerHTML = 'Değiştiriliyor...';
+
+            try {
+                const configRes = await fetch('https://lotusscp.github.io/atommodapi/config.json');
+                const CONFIG = await configRes.json();
+
+                const currentUser = localStorage.getItem('atommod_lastuser');
+
+                const url = `${CONFIG.supabase.url}/rest/v1/accounts?username=eq.${encodeURIComponent(currentUser)}`;
+
+                const res = await fetch(url, {
+                    method: 'PATCH',
+                    headers: {
+                        'apikey': CONFIG.supabase.anon_key,
+                        'Authorization': `Bearer ${CONFIG.supabase.anon_key}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify({ username: newUsername })
+                });
+
+                if (res.ok) {
+                    localStorage.setItem('atommod_lastuser', newUsername);
+                    statusEl.innerHTML = `<span style="color:#0f0">✅ Kullanıcı adı başarıyla değiştirildi: ${newUsername}</span>`;
+                } else {
+                    statusEl.innerHTML = `<span style="color:#ff6666">❌ Değiştirilemedi. Yetkiniz olmayabilir.</span>`;
+                }
+            } catch (err) {
+                statusEl.innerHTML = `<span style="color:#ff6666">❌ Hata: ${err.message}</span>`;
+            }
+        });
+
+        // Şifre değiştir
+        document.getElementById('changePasswordBtn').addEventListener('click', async () => {
+            const newPassword = document.getElementById('newPassword').value.trim();
+            const statusEl = document.getElementById('passwordStatus');
+
+            if (!newPassword) return alert("Yeni şifre girin!");
+
+            statusEl.innerHTML = 'Değiştiriliyor...';
+
+            try {
+                const configRes = await fetch('https://lotusscp.github.io/atommodapi/config.json');
+                const CONFIG = await configRes.json();
+
+                const currentUser = localStorage.getItem('atommod_lastuser');
+
+                const url = `${CONFIG.supabase.url}/rest/v1/accounts?username=eq.${encodeURIComponent(currentUser)}`;
+
+                const res = await fetch(url, {
+                    method: 'PATCH',
+                    headers: {
+                        'apikey': CONFIG.supabase.anon_key,
+                        'Authorization': `Bearer ${CONFIG.supabase.anon_key}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify({ password: newPassword })
+                });
+
+                if (res.ok) {
+                    statusEl.innerHTML = `<span style="color:#0f0">✅ Şifre başarıyla değiştirildi.</span>`;
+                } else {
+                    statusEl.innerHTML = `<span style="color:#ff6666">❌ Şifre değiştirilemedi. Yetkiniz olmayabilir.</span>`;
+                }
+            } catch (err) {
+                statusEl.innerHTML = `<span style="color:#ff6666">❌ Hata: ${err.message}</span>`;
+            }
+        });
+    </script>
 </body>
 </html>
