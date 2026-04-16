@@ -4,14 +4,21 @@
     <meta charset="utf-8" />
     <title>Discord Bağlama</title>
     <style>
-        body { font-family: Arial; background: #0a0a0a; color: #0f0; text-align: center; padding: 80px; }
-        .success { color: #0f0; font-size: 24px; }
-        .error { color: #ff6666; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #0a0a0a; 
+            color: #0f0; 
+            text-align: center; 
+            padding: 100px 20px; 
+        }
+        .success { color: #0f0; font-size: 26px; }
+        .error { color: #ff6666; font-size: 22px; }
+        a { color: #0f0; text-decoration: none; font-size: 18px; }
     </style>
 </head>
 <body>
-    <h1>Discord Bağlama</h1>
-    <div id="status">İşlem yapılıyor...</div>
+    <h1>Discord Hesap Bağlama</h1>
+    <div id="status">İşlem yapılıyor, lütfen bekleyin...</div>
 
     <script>
         async function completeDiscordLink() {
@@ -20,12 +27,23 @@
             const accessToken = params.get('access_token');
 
             if (!accessToken) {
-                document.getElementById('status').innerHTML = `<span class="error">❌ Token alınamadı.</span>`;
+                document.getElementById('status').innerHTML = `<span class="error">❌ Token alınamadı. Lütfen tekrar deneyin.</span>`;
+                return;
+            }
+
+            // Giriş yapmış kullanıcının adını al
+            const currentUsername = localStorage.getItem('atommod_lastuser');
+
+            if (!currentUsername) {
+                document.getElementById('status').innerHTML = `
+                    <span class="error">❌ Önce giriş yapmalısınız!</span><br><br>
+                    <a href="login.html">→ Giriş Yap</a>
+                `;
                 return;
             }
 
             try {
-                // Discord'dan kullanıcı bilgisi al
+                // Discord kullanıcı bilgisini al
                 const userRes = await fetch('https://discord.com/api/users/@me', {
                     headers: { 'Authorization': `Bearer ${accessToken}` }
                 });
@@ -34,13 +52,14 @@
 
                 const user = await userRes.json();
 
-                // Supabase ayarları (kendi bilgilerini yaz)
-                const SUPABASE_URL = "https://kdvvvldbetjthldhodab.supabase.co";
-                const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkdnZ2bGRiZXRqdGhsZGhvZGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNjA3NDIsImV4cCI6MjA5MDYzNjc0Mn0.o0WFi9ZYYGkInwFccMruvGYShAO_tQUpMKh_FqLgqBA";   // ← Buraya kendi anon key'ini yaz
+                // Config.json'dan Supabase bilgilerini çek
+                const configRes = await fetch('https://lotusscp.github.io/atommodapi/config.json');
+                const CONFIG = await configRes.json();
 
-                // Hangi hesabı güncelleyeceğimizi bilmek için (login sonrası kaydetmen lazım)
-                const currentUsername = localStorage.getItem('current_username') || "admin";
+                const SUPABASE_URL = CONFIG.supabase.url;
+                const ANON_KEY = CONFIG.supabase.anon_key;
 
+                // Doğru hesabı güncelle
                 const updateUrl = `${SUPABASE_URL}/rest/v1/accounts?username=eq.${encodeURIComponent(currentUsername)}`;
 
                 const body = {
@@ -63,11 +82,13 @@
                 if (res.ok) {
                     localStorage.setItem('discord_linked', 'true');
                     localStorage.setItem('discord_id', user.id);
+                    localStorage.setItem('discord_username', user.username);
+
                     document.getElementById('status').innerHTML = `
                         <span class="success">✅ Başarıyla bağlandı!</span><br><br>
-                        Discord ID: ${user.id}<br>
-                        Kullanıcı: ${user.username}<br><br>
-                        <a href="sendcommandwiacedmod.html" style="color:#0f0;">Komut Paneline Dön →</a>
+                        Discord: ${user.username}<br>
+                        Bağlanan Hesap: <strong>${currentUsername}</strong><br><br>
+                        <a href="sendcommandwiacedmod.html">→ Komut Paneline Dön</a>
                     `;
                 } else {
                     const errText = await res.text();
@@ -75,7 +96,10 @@
                 }
             } catch (err) {
                 console.error(err);
-                document.getElementById('status').innerHTML = `<span class="error">❌ Hata: ${err.message}</span>`;
+                document.getElementById('status').innerHTML = `
+                    <span class="error">❌ Hata oluştu: ${err.message}</span><br><br>
+                    <a href="accountsettings.html">← Tekrar Dene</a>
+                `;
             }
         }
 
