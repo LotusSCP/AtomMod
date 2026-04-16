@@ -57,7 +57,10 @@
             try {
                 const res = await fetch('https://lotusscp.github.io/atommodapi/config.json');
                 CONFIG = await res.json();
-            } catch (e) { console.error("Config yüklenemedi", e); }
+                console.log("Config yüklendi");
+            } catch (e) {
+                console.error("Config yüklenemedi", e);
+            }
         }
 
         async function loadPermissionConfig() {
@@ -71,7 +74,9 @@
                     }
                 });
                 permissionConfig = await res.json();
-            } catch (e) { console.error("Permission config çekilemedi", e); }
+            } catch (e) {
+                console.error("Permission config çekilemedi", e);
+            }
         }
 
         function canUseCommand(cmd) {
@@ -93,23 +98,21 @@
             const container = document.getElementById('commandButtons');
             container.innerHTML = '';
 
-            const allCommands = [
+            const cmds = [
                 {text: "Broadcast", cmd: "broadcast Merhaba Sunucu!"},
                 {text: "Round Restart", cmd: "roundrestart"},
                 {text: "Cassie", cmd: "cassie Test mesajı"},
                 {text: "Nuke", cmd: "nuke"},
                 {text: "Stop Nuke", cmd: "stopnuke"},
-                {text: "Help", cmd: "help"},
-                {text: "Players", cmd: "players"}
+                {text: "Players", cmd: "players"},
+                {text: "Help", cmd: "help"}
             ];
 
-            allCommands.forEach(item => {
+            cmds.forEach(item => {
                 const btn = document.createElement('div');
                 btn.className = 'cmd-btn';
                 btn.textContent = item.text;
-                btn.onclick = () => {
-                    document.getElementById('commandArgs').value = item.cmd;
-                };
+                btn.onclick = () => document.getElementById('commandArgs').value = item.cmd;
                 container.appendChild(btn);
             });
         }
@@ -135,11 +138,9 @@
 
             createCommandButtons();
 
-            // Oyuncu listesi
             loadPlayers();
             setInterval(loadPlayers, 8000);
 
-            // Komut gönderme
             document.getElementById('sendBtn').addEventListener('click', async () => {
                 let cmd = document.getElementById('commandArgs').value.trim();
                 if (!cmd) return alert("Komut girin!");
@@ -166,7 +167,6 @@
                         resultBox.className = 'result success';
                         resultBox.innerHTML = `✅ Komut gönderildi!<br><strong>${cmd}</strong>`;
 
-                        // Discord Log
                         if (CONFIG.discord_webhook) {
                             const user = localStorage.getItem('atommod_lastuser') || "Yetkili";
                             await fetch(CONFIG.discord_webhook, {
