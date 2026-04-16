@@ -3,58 +3,153 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>AtomMod - Kayıt Ol</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Kayıt Ol - AtomMod</title>
+    <style>
+        :root {
+            --primary: #00ff41;
+            --bg: #0a0a0a;
+            --card: #111111;
+        }
+        body {
+            background: var(--bg);
+            color: #ddd;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .register-box {
+            max-width: 440px;
+            margin: 100px auto;
+            padding: 45px 35px;
+            background: var(--card);
+            border-radius: 16px;
+            border: 2px solid var(--primary);
+            box-shadow: 0 10px 30px rgba(0, 255, 65, 0.12);
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 35px;
+        }
+        label {
+            display: block;
+            margin: 18px 0 8px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        input {
+            width: 100%;
+            padding: 14px;
+            background: #1e1e1e;
+            color: white;
+            border: 1px solid #0f0;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 16px;
+            margin-top: 30px;
+            background: var(--primary);
+            color: black;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #00cc33;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 14px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .success { background: #002200; color: #0f0; }
+        .error { background: #220000; color: #ff6666; }
+    </style>
 </head>
 <body>
-    <main>
+    <div class="register-box">
         <h1>Kayıt Ol</h1>
         <form id="registerForm">
-            <label>Kullanıcı adı:<br><input type="text" id="username" required></label>
-            <label>Şifre:<br><input type="password" id="password" minlength="6" required></label>
-            <button type="submit" id="submitBtn">Kaydol</button>
+            <label>Kullanıcı adı</label>
+            <input type="text" id="username" required autocomplete="off">
+
+            <label>Şifre</label>
+            <input type="password" id="password" minlength="6" required>
+
+            <button type="submit" id="submitBtn">Kayıt Ol</button>
         </form>
         <div id="result"></div>
-        <p><a href="index.html">Ana Sayfa</a> | <a href="login.html">Giriş Yap</a></p>
-    </main>
 
-    <script src="supabase.js"></script>
+        <p style="text-align:center; margin-top:25px;">
+            <a href="login.html" style="color:#0f0;">Zaten hesabınız var mı? Giriş yapın</a>
+        </p>
+    </div>
+
     <script src="app.js"></script>
-
     <script>
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
-    const resEl = document.getElementById('result');
-    const btn = document.getElementById('submitBtn');
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const resEl = document.getElementById('result');
+            const btn = document.getElementById('submitBtn');
 
-    btn.disabled = true;
-    resEl.innerHTML = 'Kayıt yapılıyor...';
+            if (!username || !password) {
+                resEl.className = 'result error';
+                resEl.innerHTML = '❌ Kullanıcı adı ve şifre zorunludur!';
+                return;
+            }
 
-    try {
-        const result = await window.supabaseUtils.signUp(
-            window.atommodApp.defaultSupabaseUrl,
-            window.atommodApp.defaultSupabaseAnon,
-            username,
-            password
-        );
+            btn.disabled = true;
+            resEl.innerHTML = 'Kayıt yapılıyor...';
 
-        if (result && result.ok === true) {
-            resEl.innerHTML = `✅ <b>Kayıt başarılı!</b><br>Hesap: ${username}`;
-            setTimeout(() => window.location.href = 'login.html', 2000);
-        } else {
-            const msg = result?.error?.message || 'Bilinmeyen hata';
-            resEl.innerHTML = `❌ Kayıt başarısız: ${msg}`;
-        }
-    } catch (err) {
-        resEl.innerHTML = `❌ Bağlantı hatası: ${err.message}`;
-    } finally {
-        btn.disabled = false;
-    }
-});
-        
+            try {
+                // Config.json'dan Supabase bilgilerini al
+                const configRes = await fetch('https://lotusscp.github.io/atommodapi/config.json');
+                const CONFIG = await configRes.json();
+
+                const registerUrl = `${CONFIG.supabase.url}/rest/v1/accounts`;
+
+                const response = await fetch(registerUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': CONFIG.supabase.anon_key,
+                        'Authorization': `Bearer ${CONFIG.supabase.anon_key}`,
+                        'Prefer': 'resolution=merge-duplicates'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        permission: 1,
+                        email: null
+                    })
+                });
+
+                if (response.ok) {
+                    resEl.className = 'result success';
+                    resEl.innerHTML = `✅ Kayıt başarılı!<br>Hesap: <strong>${username}</strong>`;
+                    setTimeout(() => window.location.href = 'login.html', 1800);
+                } else {
+                    const errorText = await response.text();
+                    resEl.className = 'result error';
+                    resEl.innerHTML = `❌ Kayıt başarısız: ${errorText || 'Bilinmeyen hata'}`;
+                }
+            } catch (err) {
+                resEl.className = 'result error';
+                resEl.innerHTML = `❌ Bağlantı hatası: ${err.message}`;
+            } finally {
+                btn.disabled = false;
+            }
+        });
     </script>
 </body>
 </html>
