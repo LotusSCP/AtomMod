@@ -3,97 +3,93 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>AtomMod - Ana Sayfa</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>AtomMod - Kontrol Paneli</title>
     <style>
-        .nav-link { margin: 0 12px; text-decoration: none; }
-        .logged-in { color: #0f0; font-weight: bold; }
+        :root {
+            --primary: #00ff00;
+            --bg: #0a0a0a;
+            --card: #111;
+        }
+        body {
+            background: var(--bg);
+            color: #ddd;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid var(--primary);
+        }
+        h1 { color: var(--primary); margin: 0; }
+        .nav {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 25px 0;
+        }
+        .nav a {
+            color: #ddd;
+            text-decoration: none;
+            padding: 12px 24px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .nav a:hover {
+            background: var(--primary);
+            color: black;
+            transform: translateY(-2px);
+        }
+        .card {
+            background: var(--card);
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 900px;
+            box-shadow: 0 0 20px rgba(0,255,0,0.1);
+        }
+        .status { text-align: center; font-size: 18px; margin: 15px 0; }
     </style>
 </head>
 <body>
-    <header>
-        <h1>AtomMod - Kontrol Paneli</h1>
-        
-        <nav id="mainNav">
-            <a href="kontrol.html" class="nav-link">Sunucu Kontrol</a>
-            <a href="sendcommandwiacedmod.html" class="nav-link">Sunucu Kontrol Güncel</a>
-            <a href="status.html" class="nav-link">Sunucu Durumu</a>
-            <a href="login.html" id="loginLink" class="nav-link">Giriş Yap</a>
-            <a href="register.html" id="registerLink" class="nav-link">Kayıt Ol</a>
-            <a href="#" id="logoutLink" class="nav-link" style="display:none; color:#f66;">Çıkış Yap</a>
-        </nav>
-    </header>
+    <div class="header">
+        <h1>🔧 AtomMod Kontrol Paneli</h1>
+    </div>
 
-    <main>
-        <section>
-            <h2 id="welcomeHeading">Hoş geldiniz</h2>
-            <p id="welcomeText">AtomMod web paneline hoş geldiniz.</p>
-            
-            <div id="loginStatus" style="display: none; margin: 15px 0; padding: 10px; border-radius: 6px;">
-                <!-- Dinamik doldurulacak -->
-            </div>
-        </section>
+    <div class="nav">
+        <a href="sendcommandwiacedmod.html">Komut Paneli</a>
+        <a href="kontrol.html">Sunucu Kontrol</a>
+        <a href="status.html">Sunucu Durumu</a>
+        <a href="accountsettings.html">Hesap Ayarları</a>
+    </div>
 
-        <section>
-            <h3>Kullanım</h3>
-            <ul>
-                <li>Supabase üzerinden kayıt ve giriş yapabilirsiniz.</li>
-                <li>Sunucu durumu ve oyuncu istatistikleri Supabase ile senkronize çalışır.</li>
-            </ul>
-        </section>
-    </main>
+    <div class="card">
+        <div id="welcome" class="status"></div>
+        <p style="text-align:center; color:#888;">
+            Hoş geldiniz. Yetkinize göre komut gönderebilir ve sunucuyu yönetebilirsiniz.
+        </p>
+    </div>
 
-    <script src="supabase.js"></script>
     <script src="app.js"></script>
-
     <script>
-        function updateLoginUI() {
+        window.addEventListener('load', () => {
             const isLoggedIn = localStorage.getItem('atommod_logged_in') === 'true';
-            const username = localStorage.getItem('atommod_lastuser') || '';
+            const username = localStorage.getItem('atommod_lastuser') || 'Misafir';
 
-            const loginLink = document.getElementById('loginLink');
-            const registerLink = document.getElementById('registerLink');
-            const logoutLink = document.getElementById('logoutLink');
-            const loginStatus = document.getElementById('loginStatus');
-            const welcomeHeading = document.getElementById('welcomeHeading');
-            const welcomeText = document.getElementById('welcomeText');
+            const welcomeEl = document.getElementById('welcome');
 
             if (isLoggedIn) {
-                loginLink.style.display = 'none';
-                registerLink.style.display = 'none';
-                logoutLink.style.display = 'inline';
-
-                welcomeHeading.textContent = username ? `Hoş geldiniz, ${username}` : 'Hoş geldiniz';
-                welcomeText.textContent = 'Supabase ile bağlantınız aktif.';
-
-                loginStatus.style.display = 'block';
-                loginStatus.className = 'logged-in';
-                loginStatus.innerHTML = `✅ Giriş yaptınız → <strong>${username || 'Kullanıcı'}</strong>`;
+                welcomeEl.innerHTML = `✅ Hoş geldiniz, <strong>${username}</strong>`;
+                welcomeEl.style.color = '#0f0';
             } else {
-                loginLink.style.display = 'inline';
-                registerLink.style.display = 'inline';
-                logoutLink.style.display = 'none';
-                loginStatus.style.display = 'none';
-
-                welcomeHeading.textContent = 'Hoş geldiniz';
-                welcomeText.textContent = 'AtomMod web paneline hoş geldiniz.';
+                welcomeEl.innerHTML = `❌ Giriş yapmadınız. Lütfen <a href="login.html" style="color:#0f0;">giriş yapın</a>.`;
+                welcomeEl.style.color = '#ff6666';
             }
-        }
-
-        // Çıkış Yap
-        document.getElementById('logoutLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
-                localStorage.removeItem('atommod_logged_in');
-                localStorage.removeItem('atommod_lastuser');
-                window.location.reload();
-            }
-        });
-
-        // Sayfa yüklendiğinde
-        window.addEventListener('load', () => {
-            updateLoginUI();
-            console.log('✅ AtomMod Ana Sayfa yüklendi.');
         });
     </script>
 </body>
