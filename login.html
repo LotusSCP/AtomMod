@@ -3,62 +3,133 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>AtomMod - Giriş Yap</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Giriş Yap - AtomMod</title>
+    <style>
+        body { background: #0a0a0a; color: #ddd; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
+        .login-container { 
+            max-width: 420px; 
+            margin: 80px auto; 
+            padding: 40px 30px; 
+            background: #111; 
+            border-radius: 16px; 
+            border: 2px solid #0f0; 
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.1);
+        }
+        h1 { text-align: center; color: #0f0; margin-bottom: 30px; }
+        label { display: block; margin: 15px 0 8px; font-weight: bold; color: #0f0; }
+        input { 
+            width: 100%; 
+            padding: 14px; 
+            background: #1e1e1e; 
+            color: white; 
+            border: 1px solid #0f0; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            box-sizing: border-box;
+        }
+        button { 
+            width: 100%; 
+            padding: 16px; 
+            margin-top: 25px; 
+            background: #0f0; 
+            color: black; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 18px; 
+            font-weight: bold; 
+            cursor: pointer; 
+        }
+        button:hover { background: #0c0; }
+        .result { margin-top: 20px; padding: 12px; border-radius: 8px; text-align: center; }
+        .success { background: #002200; color: #0f0; }
+        .error { background: #220000; color: #ff6666; }
+    </style>
 </head>
 <body>
-    <main>
+    <div class="login-container">
         <h1>Giriş Yap</h1>
         <form id="loginForm">
-            <label>Kullanıcı adı:<br><input type="text" id="username" required></label>
-            <label>Şifre:<br><input type="password" id="password" required></label>
+            <label>Kullanıcı adı:</label>
+            <input type="text" id="username" required>
+
+            <label>Şifre:</label>
+            <input type="password" id="password" required>
+
             <label><input type="checkbox" id="rememberMe" checked> Beni Hatırla</label>
+
             <button type="submit" id="submitBtn">Giriş Yap</button>
         </form>
         <div id="result"></div>
-        <p><a href="index.html">Ana Sayfa</a> | <a href="register.html">Kayıt Ol</a></p>
-    </main>
+        <p style="text-align:center; margin-top:20px;">
+            <a href="index.html" style="color:#0f0;">Ana Sayfa</a> | 
+            <a href="register.html" style="color:#0f0;">Kayıt Ol</a>
+        </p>
+    </div>
 
-    <script src="supabase.js"></script>
     <script src="app.js"></script>
-
     <script>
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+            e.preventDefault();
 
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
-    const remember = document.getElementById('rememberMe').checked;
-    const resEl = document.getElementById('result');
-    const btn = document.getElementById('submitBtn');
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('rememberMe').checked;
+            const resEl = document.getElementById('result');
+            const btn = document.getElementById('submitBtn');
 
-    btn.disabled = true;
-    resEl.innerHTML = 'Giriş yapılıyor...';
+            btn.disabled = true;
+            resEl.innerHTML = 'Giriş yapılıyor...';
 
-    try {
-        const result = await window.supabaseUtils.login(
-            window.atommodApp.defaultSupabaseUrl,
-            window.atommodApp.defaultSupabaseAnon,
-            username,
-            password
-        );
+            try {
+                // Config.json'dan Supabase bilgilerini al
+                const configRes = await fetch('https://lotusscp.github.io/atommodapi/config.json');
+                const CONFIG = await configRes.json();
 
-        if (result.ok) {
-            localStorage.setItem('atommod_logged_in', 'true');
-            localStorage.setItem('atommod_lastuser', result.username);
-            sessionStorage.setItem('atommod_permission', result.permission);
+                // Basit login (supabase.js bağımlılığını azalttık)
+                const loginUrl = `${CONFIG.supabase.url}/rest/v1/accounts?select=permission,username,password&username=eq.${encodeURIComponent(username)}`;
 
-            resEl.innerHTML = `✅ Giriş başarılı! Yetki: ${result.permission}`;
-            setTimeout(() => window.location.href = 'index.html', 1000);
-        } else {
-            resEl.innerHTML = `❌ ${result.error.message}`;
-        }
-    } catch (err) {
-        resEl.innerHTML = `❌ Hata: ${err.message}`;
-    } finally {
-        btn.disabled = false;
-    }
-});
+                const response = await fetch(loginUrl, {
+                    headers: {
+                        'apikey': CONFIG.supabase.anon_key,
+                        'Authorization': `Bearer ${CONFIG.supabase.anon_key}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data || data.length === 0) {
+                    resEl.className = 'result error';
+                    resEl.innerHTML = '❌ Kullanıcı adı veya şifre yanlış!';
+                    btn.disabled = false;
+                    return;
+                }
+
+                const user = data[0];
+
+                if (user.password !== password) {
+                    resEl.className = 'result error';
+                    resEl.innerHTML = '❌ Kullanıcı adı veya şifre yanlış!';
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Başarılı giriş
+                localStorage.setItem('atommod_logged_in', 'true');
+                localStorage.setItem('atommod_lastuser', user.username);
+                sessionStorage.setItem('atommod_permission', user.permission || 0);
+
+                resEl.className = 'result success';
+                resEl.innerHTML = `✅ Giriş başarılı! Yetki: ${user.permission}`;
+
+                setTimeout(() => window.location.href = 'index.html', 1200);
+
+            } catch (err) {
+                resEl.className = 'result error';
+                resEl.innerHTML = `❌ Hata: ${err.message}`;
+            } finally {
+                btn.disabled = false;
+            }
+        });
     </script>
 </body>
 </html>
